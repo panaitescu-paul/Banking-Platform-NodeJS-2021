@@ -1,0 +1,128 @@
+{    
+    "Routes": [    
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{everything}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5004"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/borger/{controller}/{everything}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{identifier}/{everything}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5004"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/borger/{controller}}/{identifier}/{everything}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5004"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/borger/{controller}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{everything}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5005"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/bank/{controller}/{everything}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{identifier}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5005"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/bank/{controller}/{identifier}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{identifier}/{everything}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5005"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/bank/{controller}/{identifier}/{everything}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{everything}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5006"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/skat/{controller}/{everything}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{identifier}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5006"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/skat/{controller}/{identifier}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {    
+        "DownstreamPathTemplate": "/api/{controller}/{identifier}/{everything}",    
+        "DownstreamScheme": "http",
+        "DownstreamHostandPorts": [    
+         {    
+           "Host": "localhost",    
+           "Port": "5006"    
+          }     
+        ],    
+        "UpstreamPathTemplate": "/api/skat/{controller}/{identifier}/{everything}",    
+        "UpstreamHttpMethod": [ "GET", "POST", "DELETE", "PUT"]
+      },
+      {
+        "DownstreamPathTemplate": "/todos",
+        "DownstreamScheme": "https",
+        "DownstreamHostAndPorts": [
+            {
+                "Host": "jsonplaceholder.typicode.com",
+                "Port": 443
+            }
+        ],
+        "UpstreamPathTemplate": "/todos",
+        "UpstreamHttpMethod": [ "GET" ]
+        }
+    ],
+    "GlobalConfiguration": {
+      "RequestIdKey": null,
+      "AdministrationPath": null
+      }
+  }    
