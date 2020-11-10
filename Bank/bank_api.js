@@ -255,30 +255,30 @@ app.get("/account", (req, res) => {
         });
     });
 });
-//
-// // READ Account by Id
-// app.get("/bank/:id", (req, res) => {
-//     console.log("req.params.id: ", req.params.id);
-//     let sql = `SELECT * FROM BankUser WHERE Id = ?`;
-//
-//     db.all(sql, [req.params.id], (err, bankUser) => {
-//         if (err) {
-//             res.status(400).json({
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//         if(bankUser.length) {
-//             res.status(200).json({
-//                 bankUser
-//             });
-//         } else {
-//             res.status(404).json({
-//                 message: `No bank user found with the id ${req.params.id}!`
-//             });
-//         }
-//     });
-// });
+
+// READ Account by Id
+app.get("/account/:id", (req, res) => {
+    console.log("req.params.id: ", req.params.id);
+    let sql = `SELECT * FROM Account WHERE Id = ?`;
+
+    db.all(sql, [req.params.id], (err, account) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        if(account.length) {
+            res.status(200).json({
+                account
+            });
+        } else {
+            res.status(404).json({
+                message: `No Account was found with the id ${req.params.id}!`
+            });
+        }
+    });
+});
 //
 // // UPDATE Account by Id
 // app.put("/bank/:id", (req, res) => {
