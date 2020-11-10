@@ -372,6 +372,58 @@ app.delete("/account/:id", (req, res) => {
     });
 });
 
+// Add deposit
+app.post("/add-deposit", (req, res) => {
+    let amount = req.body.amount;
+    let bankUserId = req.body.bankUserId;
+    let sqlGetBankUser = `SELECT * FROM BankUser WHERE Id = ?`;
+    let sqlAddDeposit = `INSERT INTO Deposit(BankUserId, Amount) VALUES(?, ?)`;
+    db.all(sqlGetBankUser, [bankUserId], (err, bankUser) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("Bank user: ", bankUser);
+        if(!bankUser.length) {
+            res.status(404).json({
+                message: `No Bank User found with the id ${bankUserId}!`
+            });
+        } else {
+            if (amount <= 0 || amount === null) {
+                res.status(404).json({
+                    message: 'The amount deposited cannot be null or negative!',
+                });
+            } else {
+                axios.post('http://localhost:7071/api/Bank_Interest_Rate', {depositAmount: amount}).then(response =>{
+                    let result = response.data;
+                    db.run(sqlAddDeposit, [bankUserId, result], (err) => {
+                        if (err) {
+                            res.status(400).json({
+                                message: 'The Deposit could not be created!',
+                                error: err.message
+                            });
+                            console.log(err.message);
+                        }
+                        console.log(`A new row has been inserted!`);
+                        res.status(201).json({
+                            message: 'Deposit successfully created!',
+                        });
+                    });
+                }).catch(err =>{
+                    if(err){
+                        console.log(err);
+                        res.status(403).json({
+                            message: err
+                        });
+                    }
+                });
+            }
+
+        }
+    });
+});
 
 app.listen(PORT, HOSTNAME, (err) => {
     if(err){
