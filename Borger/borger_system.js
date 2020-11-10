@@ -48,7 +48,7 @@ app.post("/borger", (req, res) => {
         }
         console.log(`A new row has been inserted!`);
         res.status(201).json({
-            message: 'Borger user successfully created!',
+            message: 'Borger user successfully created!'
         });
     });
 });
@@ -120,7 +120,7 @@ app.put("/borger/:id", (req, res) => {
                     console.log(err.message);
                 }
                 res.status(201).json({
-                    message: 'Borger user successfully updated!',
+                    message: 'Borger user successfully updated!'
                 });
             });
         }
@@ -153,7 +153,7 @@ app.delete("/borger/:id", (req, res) => {
                     console.log(err.message);
                 }
                 res.status(201).json({
-                    message: 'Borger user successfully deleted!',
+                    message: 'Borger user successfully deleted!'
                 });
             });
         }
@@ -161,7 +161,7 @@ app.delete("/borger/:id", (req, res) => {
 });
 
 // -------------------
-// | Address API |
+// |   Address API   |
 // -------------------
 
 app.post("/address", (req, res) => {
@@ -328,7 +328,7 @@ app.delete("/address/:id", (req, res) => {
                     console.log(err.message);
                 }
                 res.status(201).json({
-                    message: 'Address successfully deleted!',
+                    message: 'Address successfully deleted!'
                 });
             });
         }

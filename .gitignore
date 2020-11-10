@@ -758,3 +758,5 @@ dist
 
 .idea
 .vscode
+/Borger/db/borger.db
+/Bank/db/bank.db
