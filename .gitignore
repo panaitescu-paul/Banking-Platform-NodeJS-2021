@@ -757,6 +757,9 @@ dist
 # End of https://www.toptal.com/developers/gitignore/api/csharp,node,java,python,jupyternotebooks,angular,django,dart
 
 .idea
-.vscode
+
 /Borger/db/borger.db
 /Bank/db/bank.db
+/Functions/.vscode/
+/.vscode/
+/Functions-py/.vscode/
