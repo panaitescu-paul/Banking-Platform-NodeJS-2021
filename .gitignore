@@ -519,7 +519,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+Borger/.env
 .venv
 env/
 venv/
