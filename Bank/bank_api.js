@@ -621,6 +621,114 @@ app.post("/create-loan", (req, res) => {
     });
 });
 
+// UPDATE Loan and Account
+app.put("/pay-loan", (req, res) => {
+    let bankUserId = req.body.bankUserId;
+    let loanId = req.body.loanId;
+    let accountAmount;
+    let loanAmount;
+    let sqlGetLoan = `SELECT * FROM Loan WHERE Id = ?`;
+    let sqlGetAccount = `SELECT * FROM Account WHERE BankUserId = ?`;
+    let sqlUpdateLoan = `UPDATE Loan SET Amount = ?, ModifiedAt = ? WHERE Id = ?`;
+    let sqlUpdateAccount = `UPDATE Account SET Amount = ?, ModifiedAt = ? WHERE Id = ?`;
+
+    db.all(sqlGetAccount, [bankUserId], (err, account) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("Account: ", account);
+        if(!account.length) {
+            res.status(404).json({
+                message: `No Account was found with the id ${req.params.id}!`
+            });
+        } else {
+            let date = new Date();
+            let year = date.getFullYear();
+            let month = ("0" + (date.getMonth() + 1)).slice(-2);
+            let day = ("0" + date.getDate()).slice(-2);
+            let hours = ("0" + date.getHours()).slice(-2);
+            let minutes = ("0" + date.getMinutes()).slice(-2);
+            let seconds = ("0" + date.getSeconds()).slice(-2);
+            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+
+            // Get the Loan Amount
+            db.all(sqlGetLoan, [loanId], (err, loan) => {
+                if (err) {
+                    res.status(400).json({
+                        error: err
+                    });
+                    console.log(err);
+                }
+                if(!loan.length) {
+                    res.status(404).json({
+                        message: `No Loan was found with the id ${loanId}!`
+                    });
+                } else {
+                    loanAmount = loan[0].Amount;
+                    console.log('loanAmount', loanAmount);
+
+                    // Get the Account Amount
+                    db.all(sqlGetAccount, [bankUserId], (err, account) => {
+                        if (err) {
+                            res.status(400).json({
+                                error: err
+                            });
+                            console.log(err);
+                        }
+                        if(!account.length) {
+                            res.status(404).json({
+                                message: `No Account was found with the id ${bankUserId}!`
+                            });
+                        } else {
+                            console.log('account[0].Id', account[0].Id);
+
+                            accountAmount = account[0].Amount;
+                            console.log('accountAmount', accountAmount);
+
+                            // Obtain new Account Amount after loan substraction
+                            let amount = accountAmount - loanAmount;
+                            console.log('accountAmount', accountAmount);
+                            console.log('loanAmount', loanAmount);
+                            console.log('amount', amount);
+
+                            if (loanAmount > accountAmount) {
+                                res.status(400).json({
+                                    message: 'Not enough money in the Account to pay the Loan!',
+                                });
+                            } else {
+                                // Substract Amount from Account
+                                db.run(sqlUpdateAccount, [amount, modifiedAt, account[0].Id], (err) => {
+                                    if (err) {
+                                        res.status(400).json({
+                                            message: 'The Account could not be updated!',
+                                            error: err.message
+                                        });
+                                    }
+
+                                    db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
+                                        if (err) {
+                                            res.status(400).json({
+                                                message: 'The Loan could not be updated!',
+                                                error: err.message
+                                            });
+                                        }
+                                        res.status(201).json({
+                                            message: 'Loan and Account successfully updated!',
+                                        });
+                                    });
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    });
+});
+
 app.listen(PORT, HOSTNAME, (err) => {
     if(err){
         console.log(err);
