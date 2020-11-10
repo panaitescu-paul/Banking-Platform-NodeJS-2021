@@ -541,6 +541,86 @@ app.post("/withdraw-money", (req, res) => {
     }
 });
 
+
+// ---------------------------
+// |   Other functionality   |
+// ---------------------------
+
+
+// Create Loan
+app.post("/create-loan", (req, res) => {
+    let bankUserId = req.body.bankUserId;
+    let loanAmount = req.body.loanAmount;
+    let totalAccountAmount = 0;
+
+    let sqlGetBankUser = `SELECT * FROM BankUser WHERE Id = ?`;
+    let sqlLoan = `INSERT INTO Loan(BankUserId, Amount) VALUES(?, ?)`;
+
+    // Check if the bankUserId exists in the BankUser table
+    db.all(sqlGetBankUser, [bankUserId], (err, bankUser) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("Bank user: ", bankUser);
+        if(!bankUser.length) {
+            res.status(404).json({
+                message: `No Bank User found with the id ${bankUserId}!`
+            });
+        } else {
+            // Get the sum of all accounts from a certain User
+            axios.get(`http://localhost:3001/account`).then(response => {
+                let accounts = response.data.accounts;
+                console.log('accounts', accounts);
+
+                for (i = 0; i < accounts.length; i++) {
+                    if (bankUserId === accounts[i].BankUserId) {
+                        totalAccountAmount += accounts[i].Amount;
+                        console.log('totalAccountAmount ++ ', totalAccountAmount);
+                    }
+                }
+                console.log('totalAccountAmount', totalAccountAmount);
+
+                // Check if the Loan is Valid
+                axios.post(`http://localhost:7071/api/Loan_Algorithm`, {
+                    "loan": loanAmount,
+                    "totalAccountAmount": totalAccountAmount
+                }).then((response) => {
+                    console.log(response);
+                    db.run(sqlLoan, [bankUserId, loanAmount], (err) => {
+                        if (err) {
+                            res.status(400).json({
+                                message: 'The Loan could not be created!',
+                                error: err.message
+                            });
+                            console.log(err.message);
+                        }
+                        console.log(`A new row has been inserted!`);
+                        res.status(201).json({
+                            message: 'Loan successfully created!',
+                        });
+                    });
+
+                }, (error) => {
+                    console.log(error);
+                    res.status(403).json({
+                        message: 'The Loan could not be created! Loan amount is too big!',
+                    });
+                });
+            }).catch(err =>{
+                if(err){
+                    res.status(400).json({
+                        message: 'Could not get the total Account Amount for this User Id!'
+                    });
+                    console.log(err);
+                }
+            });
+        }
+    });
+});
+
 app.listen(PORT, HOSTNAME, (err) => {
     if(err){
         console.log(err);
