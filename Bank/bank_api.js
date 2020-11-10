@@ -337,40 +337,40 @@ app.put("/account/:id", (req, res) => {
         }
     });
 });
-//
-// // DELETE Account by Id
-// app.delete("/bank/:id", (req, res) => {
-//     console.log("req.params.id: ", req.params.id);
-//     let sqlGet = `SELECT * FROM BankUser WHERE Id = ?`;
-//     let sqlDelete = `DELETE FROM BankUser WHERE Id = ?`;
-//     db.all(sqlGet, [req.params.id], (err, bankUser) => {
-//         if (err) {
-//             res.status(400).json({
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//         console.log("Bank user: ", bankUser);
-//         if(!bankUser.length) {
-//             res.status(404).json({
-//                 message: `No bank user found with the id ${req.params.id}!`
-//             });
-//         } else {
-//             db.run(sqlDelete, req.params.id, (err) => {
-//                 if (err) {
-//                     res.status(400).json({
-//                         message: 'The bank user could not be deleted!',
-//                         error: err.message
-//                     });
-//                     console.log(err.message);
-//                 }
-//                 res.status(201).json({
-//                     message: 'Bank user successfully deleted!'
-//                 });
-//             });
-//         }
-//     });
-// });
+
+// DELETE Account by Id
+app.delete("/account/:id", (req, res) => {
+    console.log("req.params.id: ", req.params.id);
+    let sqlGet = `SELECT * FROM Account WHERE Id = ?`;
+    let sqlDelete = `DELETE FROM Account WHERE Id = ?`;
+    db.all(sqlGet, [req.params.id], (err, account) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("Account: ", account);
+        if(!account.length) {
+            res.status(404).json({
+                message: `No Account was found with the id ${req.params.id}!`
+            });
+        } else {
+            db.run(sqlDelete, req.params.id, (err) => {
+                if (err) {
+                    res.status(400).json({
+                        message: 'The Account could not be deleted!',
+                        error: err.message
+                    });
+                    console.log(err.message);
+                }
+                res.status(200).json({
+                    message: 'Account successfully deleted!'
+                });
+            });
+        }
+    });
+});
 
 
 app.listen(PORT, HOSTNAME, (err) => {
