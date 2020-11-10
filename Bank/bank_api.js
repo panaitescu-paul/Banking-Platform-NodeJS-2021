@@ -425,6 +425,31 @@ app.post("/add-deposit", (req, res) => {
     });
 });
 
+// List deposits
+app.get("/list-deposits/:bankUserId", (req, res) => {
+    console.log("req.params.bankUserId: ", req.params.bankUserId);
+    let sql = `SELECT * FROM Deposit WHERE BankUserId = ?`;
+
+    db.all(sql, [req.params.bankUserId], (err, deposits) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("Deposits", deposits);
+        if(deposits.length) {
+            res.status(200).json({
+                deposits
+            });
+        } else {
+            res.status(404).json({
+                message: `No deposits found for the bank user with the id ${req.params.bankUserId}!`
+            });
+        }
+    });
+});
+
 app.listen(PORT, HOSTNAME, (err) => {
     if(err){
         console.log(err);
