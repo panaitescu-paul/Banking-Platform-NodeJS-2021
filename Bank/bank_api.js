@@ -222,17 +222,20 @@ app.post("/account", (req, res) => {
                             message: 'The Account Number already exists!',
                             error: err.message
                         });
+                    } else {
+                        res.status(400).json({
+                            message: 'The Account could not be created!',
+                            error: err.message
+                        });
+                        console.log(err.message);
                     }
-                    res.status(400).json({
-                        message: 'The Account could not be created!',
-                        error: err.message
+                } else {
+                    console.log(`A new row has been inserted!`);
+                    res.status(201).json({
+                        message: 'Account successfully created!',
                     });
-                    console.log(err.message);
                 }
-                console.log(`A new row has been inserted!`);
-                res.status(201).json({
-                    message: 'Account successfully created!',
-                });
+
             });
         }
     });
@@ -448,6 +451,94 @@ app.get("/list-deposits/:bankUserId", (req, res) => {
             });
         }
     });
+});
+
+// Withdraw money
+app.post("/withdraw-money", (req, res) => {
+    let amount = req.body.amount;
+    let userId = req.body.userId;
+    let sqlGetBankUser = `SELECT * FROM BankUser WHERE UserId = ?`;
+    let sqlGetAccount = `SELECT * FROM Account WHERE BankUserId = ?`;
+    let sqlUpdateAccount = `UPDATE Account SET Amount = ?, ModifiedAt = ? WHERE Id = ?`;
+
+    if (amount <= 0 || amount === null) {
+        res.status(404).json({
+            message: 'The amount deposited cannot be null or negative!',
+        });
+    } else {
+        db.all(sqlGetBankUser, [userId], (err, bankUser) => {
+            if (err) {
+                res.status(400).json({
+                    error: err
+                });
+                console.log(err);
+            }
+            console.log("bankUser", bankUser[0]);
+            if(bankUser.length) {
+                db.all(sqlGetAccount, [bankUser[0].Id], (err, accounts) => {
+                    if (err) {
+                        res.status(400).json({
+                            error: err
+                        });
+                        console.log(err);
+                    }
+                    console.log("accounts", accounts);
+                    if(accounts.length) {
+                        let withdraw = false;
+                        let id = "";
+                        let amountBeforeWithdraw = "";
+                        for (let i = 0; i < accounts.length; i++) {
+                            if (accounts[i].Amount - amount >= 0) {
+                                withdraw = true;
+                                id = accounts[i].Id;
+                                amountBeforeWithdraw = accounts[i].Amount;
+                                break;
+                            }
+                        }
+                        console.log(withdraw);
+                        console.log(id);
+                        console.log(amountBeforeWithdraw);
+                        if (withdraw) {
+                            let date = new Date();
+                            let year = date.getFullYear();
+                            let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                            let day = ("0" + date.getDate()).slice(-2);
+                            let hours = ("0" + date.getHours()).slice(-2);
+                            let minutes = ("0" + date.getMinutes()).slice(-2);
+                            let seconds = ("0" + date.getSeconds()).slice(-2);
+                            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+                            let amountAfterWithdraw = amountBeforeWithdraw - amount;
+                            db.run(sqlUpdateAccount, [amountAfterWithdraw, modifiedAt, id], (err) => {
+                                if (err) {
+                                    res.status(400).json({
+                                        message: 'The Account could not be updated!',
+                                        error: err.message
+                                    });
+                                    console.log(err.message);
+                                } else {
+                                    res.status(201).json({
+                                        message: 'Withdraw successfully completed!',
+                                    });
+                                }
+                            });
+                        } else {
+                            res.status(404).json({
+                                message: 'You do not have enough money in any of your accounts!',
+                            });
+                        }
+                    } else {
+                        res.status(404).json({
+                            message: `No accounts found for the bank user with the id ${bankUser.Id}!`
+                        });
+                    }
+                });
+            } else {
+                res.status(404).json({
+                    message: `No bank user found for the user with the id ${userId}!`
+                });
+            }
+        });
+    }
 });
 
 app.listen(PORT, HOSTNAME, (err) => {
