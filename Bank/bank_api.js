@@ -198,46 +198,63 @@ app.post("/account", (req, res) => {
     let isStudent = req.body.isStudent;
     let interestRate = req.body.interestRate;
     let amount = req.body.amount;
+    let sqlGetBankUser = `SELECT * FROM BankUser WHERE Id = ?`;
     let sqlAccount = `INSERT INTO Account(BankUserId, AccountNo, IsStudent, InterestRate, Amount) VALUES(?, ?, ?, ?, ?)`;
 
-    db.run(sqlAccount, [bankUserId, accountNo, isStudent, interestRate, amount], (err) => {
+    // Check if the bankUserId exists in the BankUser table
+    db.all(sqlGetBankUser, [bankUserId], (err, bankUser) => {
         if (err) {
-            if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
-                res.status(400).json({
-                    message: 'The Account Number already exists!',
-                    error: err.message
-                });
-            }
             res.status(400).json({
-                message: 'The Account could not be created!',
-                error: err.message
+                error: err
             });
-            console.log(err.message);
+            console.log(err);
         }
-        console.log(`A new row has been inserted!`);
-        res.status(201).json({
-            message: 'Account successfully created!',
+        console.log("Bank user: ", bankUser);
+        if(!bankUser.length) {
+            res.status(404).json({
+                message: `No Bank User found with the id ${bankUserId}!`
+            });
+        } else {
+            db.run(sqlAccount, [bankUserId, accountNo, isStudent, interestRate, amount], (err) => {
+                if (err) {
+                    if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
+                        res.status(400).json({
+                            message: 'The Account Number already exists!',
+                            error: err.message
+                        });
+                    }
+                    res.status(400).json({
+                        message: 'The Account could not be created!',
+                        error: err.message
+                    });
+                    console.log(err.message);
+                }
+                console.log(`A new row has been inserted!`);
+                res.status(201).json({
+                    message: 'Account successfully created!',
+                });
+            });
+        }
+    });
+});
+
+// READ Accounts
+app.get("/account", (req, res) => {
+    let sql = `SELECT * FROM Account`;
+    db.all(sql, [], (err, accounts) => {
+        if (err) {
+            res.status(400).json({
+                message: 'The Accounts could not be showed!',
+                error: err
+            });
+            console.log(err);
+        }
+
+        res.status(200).json({
+            accounts
         });
     });
 });
-//
-// // READ Accounts
-// app.get("/bank", (req, res) => {
-//     let sql = `SELECT * FROM BankUser`;
-//     db.all(sql, [], (err, bankUsers) => {
-//         if (err) {
-//             res.status(400).json({
-//                 message: 'The bank users could not be showed!',
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//
-//         res.status(200).json({
-//             bankUsers
-//         });
-//     });
-// });
 //
 // // READ Account by Id
 // app.get("/bank/:id", (req, res) => {
