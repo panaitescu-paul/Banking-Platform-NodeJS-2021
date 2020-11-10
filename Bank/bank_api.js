@@ -279,49 +279,64 @@ app.get("/account/:id", (req, res) => {
         }
     });
 });
-//
-// // UPDATE Account by Id
-// app.put("/bank/:id", (req, res) => {
-//     console.log("req.params.id: ", req.params.id);
-//     let bankUserId = req.body.userId;
-//     let sqlGet = `SELECT * FROM BankUser WHERE Id = ?`;
-//     let sqlUpdate = `UPDATE BankUser SET UserId = ?, ModifiedAt = ? WHERE Id = ?`;
-//     db.all(sqlGet, [req.params.id], (err, bankUser) => {
-//         if (err) {
-//             res.status(400).json({
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//         console.log("Bank User: ", bankUser);
-//         if(!bankUser.length) {
-//             res.status(404).json({
-//                 message: `No bank user found with the id ${req.params.id}!`
-//             });
-//         } else {
-//             let date = new Date();
-//             let year = date.getFullYear();
-//             let month = ("0" + (date.getMonth() + 1)).slice(-2);
-//             let day = ("0" + date.getDate()).slice(-2);
-//             let hours = ("0" + date.getHours()).slice(-2);
-//             let minutes = ("0" + date.getMinutes()).slice(-2);
-//             let seconds = ("0" + date.getSeconds()).slice(-2);
-//             let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
-//             db.run(sqlUpdate, [bankUserId, modifiedAt, req.params.id], (err) => {
-//                 if (err) {
-//                     res.status(400).json({
-//                         message: 'The bank user could not be updated!',
-//                         error: err.message
-//                     });
-//                     console.log(err.message);
-//                 }
-//                 res.status(201).json({
-//                     message: 'Bank user successfully updated!',
-//                 });
-//             });
-//         }
-//     });
-// });
+
+// UPDATE Account by Id
+app.put("/account/:id", (req, res) => {
+    console.log("req.params.id: ", req.params.id);
+    let bankUserId = req.body.bankUserId;
+    let accountNo = req.body.accountNo;
+    let isStudent = req.body.isStudent;
+    let interestRate = req.body.interestRate;
+    let amount = req.body.amount;
+
+    let sqlGet = `SELECT * FROM Account WHERE Id = ?`;
+    let sqlUpdate = `UPDATE Account SET BankUserId = ?, AccountNo = ?, IsStudent = ?, 
+                                        InterestRate = ?, Amount = ?, ModifiedAt = ? 
+                                        WHERE Id = ?`;
+
+    db.all(sqlGet, [req.params.id], (err, account) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("Account: ", account);
+        if(!account.length) {
+            res.status(404).json({
+                message: `No Account was found with the id ${req.params.id}!`
+            });
+        } else {
+            let date = new Date();
+            let year = date.getFullYear();
+            let month = ("0" + (date.getMonth() + 1)).slice(-2);
+            let day = ("0" + date.getDate()).slice(-2);
+            let hours = ("0" + date.getHours()).slice(-2);
+            let minutes = ("0" + date.getMinutes()).slice(-2);
+            let seconds = ("0" + date.getSeconds()).slice(-2);
+            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+
+            db.run(sqlUpdate, [bankUserId, accountNo, isStudent, interestRate, amount, modifiedAt, req.params.id], (err) => {
+                if (err) {
+                    if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
+                        res.status(400).json({
+                            message: 'The Account Number already exists!',
+                            error: err.message
+                        });
+                    }
+                    res.status(400).json({
+                        message: 'The Account could not be updated!',
+                        error: err.message
+                    });
+                    console.log(err.message);
+                }
+                res.status(201).json({
+                    message: 'Account successfully updated!',
+                });
+            });
+        }
+    });
+});
 //
 // // DELETE Account by Id
 // app.delete("/bank/:id", (req, res) => {
