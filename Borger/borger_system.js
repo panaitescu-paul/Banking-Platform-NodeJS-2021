@@ -13,19 +13,21 @@ let db = new sqlite3.Database('./db/borger.db', (err) => {
     }
     console.log("Connected to database!")
 });
+
+// For Referential Integrity
 db.get("PRAGMA foreign_keys = ON");
 
 db.run(`CREATE TABLE IF NOT EXISTS BorgerUser(
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     UserId INTEGER NOT NULL,
-    CreatedAt TEXT DEFAULT (datetime('now','localtime')))`
+    CreatedAt DATE DEFAULT (datetime('now','localtime')))`
 );
 
 db.run(`CREATE TABLE IF NOT EXISTS Address(
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     BorgerUserId INTEGER NOT NULL,
     Address TEXT NOT NULL,
-    CreatedAt TEXT DEFAULT (datetime('now','localtime')),
+    CreatedAt DATE DEFAULT (datetime('now','localtime')),
     IsValid INTEGER DEFAULT 1,
     FOREIGN KEY(BorgerUserId) REFERENCES BorgerUser(Id) ON DELETE CASCADE)`
 );
@@ -34,6 +36,7 @@ db.run(`CREATE TABLE IF NOT EXISTS Address(
 // | Borger User API |
 // -------------------
 
+// CREATE Borger User
 app.post("/borger", (req, res) => {
     let borgerUserId = req.body.userId;
     let sql = `INSERT INTO BorgerUser(UserId) VALUES(?)`;
@@ -53,6 +56,7 @@ app.post("/borger", (req, res) => {
     });
 });
 
+// READ Borger User
 app.get("/borger", (req, res) => {
     let sql = `SELECT * FROM BorgerUser`;
     db.all(sql, [], (err, borgerUsers) => {
@@ -70,6 +74,7 @@ app.get("/borger", (req, res) => {
     });
 });
 
+// READ Borger User by Id
 app.get("/borger/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let sql = `SELECT * FROM BorgerUser WHERE Id = ?`;
@@ -93,6 +98,7 @@ app.get("/borger/:id", (req, res) => {
     });
 });
 
+// UPDATE Borger User by Id
 app.put("/borger/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let borgerUserId = req.body.userId;
@@ -127,6 +133,7 @@ app.put("/borger/:id", (req, res) => {
     });
 });
 
+// DELETE Borger User by Id
 app.delete("/borger/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let sqlGet = `SELECT * FROM BorgerUser WHERE Id = ?`;
@@ -164,6 +171,7 @@ app.delete("/borger/:id", (req, res) => {
 // |   Address API   |
 // -------------------
 
+// CREATE Address
 app.post("/address", (req, res) => {
     let borgerUserId = req.body.borgerUserId;
     let address = req.body.address;
@@ -177,7 +185,7 @@ app.post("/address", (req, res) => {
         axios.get(`http://localhost:3000/address`).then(response => {
             let addresses = response.data.addresses;
             // check if the borger user id from the address table already exists
-            // then if it does make the isValid field false for the old address
+            // if it exists, set the isValid field false for the old addresses
             for (i = 0; i < addresses.length; i++) {
                 if (borgerUserId === addresses[i].BorgerUserId) {
                     db.run(sqlUpdateValid, [0, borgerUserId], (err) => {
@@ -225,6 +233,7 @@ app.post("/address", (req, res) => {
 
 });
 
+// READ Address
 app.get("/address", (req, res) => {
     let sql = `SELECT * FROM Address`;
     db.all(sql, [], (err, addresses) => {
@@ -243,6 +252,7 @@ app.get("/address", (req, res) => {
     });
 });
 
+// READ Address by Id
 app.get("/address/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let sql = `SELECT * FROM Address WHERE Id = ?`;
@@ -267,6 +277,7 @@ app.get("/address/:id", (req, res) => {
     });
 });
 
+// UPDATE Address by Id
 app.put("/address/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let borgerUserId = req.body.borgerUserId;
@@ -302,6 +313,7 @@ app.put("/address/:id", (req, res) => {
     });
 });
 
+// DELETE Address by Id
 app.delete("/address/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let sqlGet = `SELECT * FROM Address WHERE Id = ?`;
