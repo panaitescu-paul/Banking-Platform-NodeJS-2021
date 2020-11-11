@@ -13,6 +13,10 @@ let db = new sqlite3.Database('./db/bank.db', (err) => {
     console.log("Connected to database!")
 });
 
+// -------------------
+// |  SQLITE Tables  |
+// -------------------
+
 db.run(`CREATE TABLE IF NOT EXISTS BankUser(
     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     UserId INTEGER NOT NULL,
@@ -291,7 +295,6 @@ app.put("/account/:id", (req, res) => {
     let isStudent = req.body.isStudent;
     let interestRate = req.body.interestRate;
     let amount = req.body.amount;
-
     let sqlGet = `SELECT * FROM Account WHERE Id = ?`;
     let sqlUpdate = `UPDATE Account SET BankUserId = ?, AccountNo = ?, IsStudent = ?, 
                                         InterestRate = ?, Amount = ?, ModifiedAt = ? 
@@ -375,7 +378,11 @@ app.delete("/account/:id", (req, res) => {
     });
 });
 
-// Add deposit
+// ---------------------------
+// |   Other functionality   |
+// ---------------------------
+
+// Add Deposit
 app.post("/add-deposit", (req, res) => {
     let amount = req.body.amount;
     let bankUserId = req.body.bankUserId;
@@ -423,12 +430,11 @@ app.post("/add-deposit", (req, res) => {
                     }
                 });
             }
-
         }
     });
 });
 
-// List deposits
+// List Deposits
 app.get("/list-deposits/:bankUserId", (req, res) => {
     console.log("req.params.bankUserId: ", req.params.bankUserId);
     let sql = `SELECT * FROM Deposit WHERE BankUserId = ?`;
@@ -540,12 +546,6 @@ app.post("/withdraw-money", (req, res) => {
         });
     }
 });
-
-
-// ---------------------------
-// |   Other functionality   |
-// ---------------------------
-
 
 // Create Loan
 app.post("/create-loan", (req, res) => {
@@ -682,7 +682,7 @@ app.put("/pay-loan", (req, res) => {
                             res.status(404).json({
                                 message: `No Account was found with the id ${bankUserId}!`
                             });
-                        } else {
+                        } else { // if we have matching accounts
                             console.log('account[0].Id', account[0].Id);
 
                             accountAmount = account[0].Amount;
@@ -707,7 +707,7 @@ app.put("/pay-loan", (req, res) => {
                                             error: err.message
                                         });
                                     }
-
+                                    // Set Loan Amount to 0
                                     db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
                                         if (err) {
                                             res.status(400).json({
@@ -741,7 +741,6 @@ app.get("/list-loans", (req, res) => {
             });
         }
         console.log('loans', loans);
-
         // Eliminate Paid Loans
         for (i = 0; i < loans.length; i++) {
             if (loans[i].Amount == 0) {
@@ -750,13 +749,11 @@ app.get("/list-loans", (req, res) => {
             }
         }
         console.log('loans -- ', loans);
-
         if (!loans.length) {
             res.status(400).json({
                 message: 'No Loans are available for this User!',
             });
         }
-
         res.status(200).json({
             loans
         });
