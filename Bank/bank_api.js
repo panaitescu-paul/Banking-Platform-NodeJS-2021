@@ -729,6 +729,40 @@ app.put("/pay-loan", (req, res) => {
     });
 });
 
+// READ list of Unpaid Loans
+app.get("/list-loans", (req, res) => {
+    let bankUserId = req.body.bankUserId;
+    let sql = `SELECT * FROM Loan WHERE BankUserId = ?`;
+    db.all(sql, [bankUserId], (err, loans) => {
+        if (err) {
+            res.status(400).json({
+                message: 'The Loans could not be showed!',
+                error: err
+            });
+        }
+        console.log('loans', loans);
+
+        // Eliminate Paid Loans
+        for (i = 0; i < loans.length; i++) {
+            if (loans[i].Amount == 0) {
+                loans.splice(i, 1); // eliminate element from Array
+                i--;
+            }
+        }
+        console.log('loans -- ', loans);
+
+        if (!loans.length) {
+            res.status(400).json({
+                message: 'No Loans are available for this User!',
+            });
+        }
+
+        res.status(200).json({
+            loans
+        });
+    });
+});
+
 app.listen(PORT, HOSTNAME, (err) => {
     if(err){
         console.log(err);
