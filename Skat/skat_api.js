@@ -274,41 +274,51 @@ app.get("/skat-year/:id", (req, res) => {
         }
     });
 });
-//
-// // UPDATE Account by Id
-// app.put("/skat-user/:id", (req, res) => {
-//     let userId = req.body.userId;
-//     let isActive = req.body.isActive;
-//     let sqlGet = `SELECT * FROM SkatUser WHERE Id = ?`;
-//     let sqlUpdate = `UPDATE SkatUser SET UserId = ?, IsActive = ? WHERE Id = ?`;
-//     db.all(sqlGet, [req.params.id], (err, skatUser) => {
-//         if (err) {
-//             res.status(400).json({
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//         console.log("Skat User: ", skatUser);
-//         if(!skatUser.length) {
-//             res.status(404).json({
-//                 message: `No Skat User found with the id ${req.params.id}!`
-//             });
-//         } else {
-//             db.run(sqlUpdate, [userId, isActive, req.params.id], (err) => {
-//                 if (err) {
-//                     res.status(400).json({
-//                         message: 'The Skat User could not be updated!',
-//                         error: err.message
-//                     });
-//                     console.log(err.message);
-//                 }
-//                 res.status(201).json({
-//                     message: 'Skat user successfully updated!',
-//                 });
-//             });
-//         }
-//     });
-// });
+
+// UPDATE Skat Year by Id
+app.put("/skat-year/:id", (req, res) => {
+    let label = req.body.label;
+    let startDate = req.body.startDate;
+    let endDate = req.body.endDate;
+    let sqlGet = `SELECT * FROM SkatYear WHERE Id = ?`;
+    let sqlUpdate = `UPDATE SkatYear SET Label = ?, ModifiedAt = ?, StartDate = ?, EndDate = ? WHERE Id = ?`;
+    db.all(sqlGet, [req.params.id], (err, skatYear) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("Skat Year: ", skatYear);
+        if(!skatYear.length) {
+            res.status(404).json({
+                message: `No Skat Year found with the id ${req.params.id}!`
+            });
+        } else {
+            let date = new Date();
+            let year = date.getFullYear();
+            let month = ("0" + (date.getMonth() + 1)).slice(-2);
+            let day = ("0" + date.getDate()).slice(-2);
+            let hours = ("0" + date.getHours()).slice(-2);
+            let minutes = ("0" + date.getMinutes()).slice(-2);
+            let seconds = ("0" + date.getSeconds()).slice(-2);
+            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+            db.run(sqlUpdate, [label, modifiedAt, startDate, endDate, req.params.id], (err) => {
+                if (err) {
+                    res.status(400).json({
+                        message: 'The Skat Year could not be updated!',
+                        error: err.message
+                    });
+                    console.log(err.message);
+                }
+                res.status(201).json({
+                    message: 'Skat Year successfully updated!',
+                });
+            });
+        }
+    });
+});
+
 //
 // // DELETE Skat User by Id
 // app.delete("/skat-user/:id", (req, res) => {
