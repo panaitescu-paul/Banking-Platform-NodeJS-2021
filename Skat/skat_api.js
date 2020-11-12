@@ -319,40 +319,39 @@ app.put("/skat-year/:id", (req, res) => {
     });
 });
 
-//
-// // DELETE Skat User by Id
-// app.delete("/skat-user/:id", (req, res) => {
-//     console.log("req.params.id: ", req.params.id);
-//     let sqlGet = `SELECT * FROM SkatUser WHERE Id = ?`;
-//     let sqlDelete = `DELETE FROM SkatUser WHERE Id = ?`;
-//     db.all(sqlGet, [req.params.id], (err, user) => {
-//         if (err) {
-//             res.status(400).json({
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//         console.log("User: ", user);
-//         if(!user.length) {
-//             res.status(404).json({
-//                 message: `No Skat User was found with the id ${req.params.id}!`
-//             });
-//         } else {
-//             db.run(sqlDelete, req.params.id, (err) => {
-//                 if (err) {
-//                     res.status(400).json({
-//                         message: 'The Skat User could not be deleted!',
-//                         error: err.message
-//                     });
-//                     console.log(err.message);
-//                 }
-//                 res.status(200).json({
-//                     message: 'Skat User successfully deleted!'
-//                 });
-//             });
-//         }
-//     });
-// });
+
+// DELETE Skat Year by Id
+app.delete("/skat-year/:id", (req, res) => {
+    let sqlGet = `SELECT * FROM SkatYear WHERE Id = ?`;
+    let sqlDelete = `DELETE FROM SkatYear WHERE Id = ?`;
+    db.all(sqlGet, [req.params.id], (err, year) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        console.log("User: ", year);
+        if(!year.length) {
+            res.status(404).json({
+                message: `No Skat Year was found with the id ${req.params.id}!`
+            });
+        } else {
+            db.run(sqlDelete, req.params.id, (err) => {
+                if (err) {
+                    res.status(400).json({
+                        message: 'The Skat Year could not be deleted!',
+                        error: err.message
+                    });
+                    console.log(err.message);
+                }
+                res.status(200).json({
+                    message: 'Skat Year successfully deleted!'
+                });
+            });
+        }
+    });
+});
 
 app.listen(PORT, HOSTNAME, (err) => {
     if(err){
