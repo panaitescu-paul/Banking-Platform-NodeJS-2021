@@ -360,18 +360,19 @@ app.post("/pay-taxes", (req, res) => {
     let userId = req.body.userId;
     let totalAmount = req.body.totalAmount;
     let sqlGet = `SELECT * FROM SkatUserYear WHERE UserId = ?`;
+    let sqlUpdate = `UPDATE SkatUserYear SET IsPaid = ?, Amount = ? WHERE UserId = ?`;
+    console.log("userId", userId);
+    console.log("totalAmount", totalAmount);
 
     axios.get(`http://localhost:3001/bank`).then(response => {
         console.log("Response: ", response.data.bankUsers);
         let bankUsers = response.data.bankUsers;
-
         let isFound = false;
         for (let i = 0; i < bankUsers.length; i++) {
             if (bankUsers[i].UserId === userId) {
                 isFound = true;
             }
         }
-
         if (!isFound) {
             res.status(404).json({
                 message: `No User was found with the id ${userId}!`
@@ -386,19 +387,58 @@ app.post("/pay-taxes", (req, res) => {
                 } else {
                     if(skatUserYears.length) {
                         let countUnpaidTaxesPerYear = 0;
-                        for (let i = 0; i < skatUserYears.length; i++) {
-                            if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {
-                                countUnpaidTaxesPerYear++;
-                            }
-                        }
+                        // let sum = 0;
+                        // for (let i = 0; i < skatUserYears.length; i++) {
+                        //     if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {
+                        //         countUnpaidTaxesPerYear++;
+                        //         sum += skatUserYears[i].Amount;
+                        //     }
+                        // }
+                        // console.log("sum", sum);
 
+
+                        axios.post(`http://localhost:7072/api/Skat_Tax_Calculator`, {
+                            "money": totalAmount,
+                        }).then((response) => {
+                            console.log('response.data.tax_money', response.data.tax_money);
+                            let afterTaxAmount = totalAmount + response.data.tax_money;
+                            db.run(sqlUpdate, [1, afterTaxAmount, userId], (err) => {
+                                if (err) {
+                                    res.status(400).json({
+                                        message: 'The Skat User Year could not be updated!',
+                                        error: err.message
+                                    });
+                                    console.log(err.message);
+                                }
+                                // res.status(200).json({
+                                //     message: `1`
+                                // });
+                                axios.post(`http://localhost:3001/withdraw-money`, {
+                                    "amount": afterTaxAmount,
+                                    "userId": userId,
+                                }).then((response) => {
+                                    res.status(200).json({
+                                        message: 'Taxes successfully paid!'
+                                    });
+                                }, (error) => {
+                                    console.log(error);
+                                    res.status(403).json({
+                                        message: error
+                                    });
+                                });
+                            });
+                        }, (error) => {
+                            console.log(error);
+                            res.status(403).json({
+                                message: error
+                            });
+                        });
                     } else {
                         res.status(404).json({
                             message: `No Skat User Years was found for the user with id ${userId}!`
                         });
                     }
                 }
-
             });
         }
     }).catch(err =>{
