@@ -669,60 +669,44 @@ app.put("/pay-loan", (req, res) => {
                 } else {
                     loanAmount = loan[0].Amount;
                     console.log('loanAmount', loanAmount);
+                    console.log('account[0].Id', account[0].Id);
 
-                    // Get the Account Amount
-                    db.all(sqlGetAccount, [bankUserId], (err, account) => {
-                        if (err) {
-                            res.status(400).json({
-                                error: err
-                            });
-                            console.log(err);
-                        }
-                        if(!account.length) {
-                            res.status(404).json({
-                                message: `No Account was found with the id ${bankUserId}!`
-                            });
-                        } else { // if we have matching accounts
-                            console.log('account[0].Id', account[0].Id);
+                    accountAmount = account[0].Amount;
+                    console.log('accountAmount', accountAmount);
 
-                            accountAmount = account[0].Amount;
-                            console.log('accountAmount', accountAmount);
+                    // Obtain new Account Amount after loan substraction
+                    let amount = accountAmount - loanAmount;
+                    console.log('accountAmount', accountAmount);
+                    console.log('loanAmount', loanAmount);
+                    console.log('amount', amount);
 
-                            // Obtain new Account Amount after loan substraction
-                            let amount = accountAmount - loanAmount;
-                            console.log('accountAmount', accountAmount);
-                            console.log('loanAmount', loanAmount);
-                            console.log('amount', amount);
-
-                            if (loanAmount > accountAmount) {
+                    if (loanAmount > accountAmount) {
+                        res.status(400).json({
+                            message: 'Not enough money in the Account to pay the Loan!',
+                        });
+                    } else {
+                        // Substract Amount from Account
+                        db.run(sqlUpdateAccount, [amount, modifiedAt, account[0].Id], (err) => {
+                            if (err) {
                                 res.status(400).json({
-                                    message: 'Not enough money in the Account to pay the Loan!',
-                                });
-                            } else {
-                                // Substract Amount from Account
-                                db.run(sqlUpdateAccount, [amount, modifiedAt, account[0].Id], (err) => {
-                                    if (err) {
-                                        res.status(400).json({
-                                            message: 'The Account could not be updated!',
-                                            error: err.message
-                                        });
-                                    }
-                                    // Set Loan Amount to 0
-                                    db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
-                                        if (err) {
-                                            res.status(400).json({
-                                                message: 'The Loan could not be updated!',
-                                                error: err.message
-                                            });
-                                        }
-                                        res.status(201).json({
-                                            message: 'Loan and Account successfully updated!',
-                                        });
-                                    });
+                                    message: 'The Account could not be updated!',
+                                    error: err.message
                                 });
                             }
-                        }
-                    });
+                            // Set Loan Amount to 0
+                            db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
+                                if (err) {
+                                    res.status(400).json({
+                                        message: 'The Loan could not be updated!',
+                                        error: err.message
+                                    });
+                                }
+                                res.status(201).json({
+                                    message: 'Loan and Account successfully updated!',
+                                });
+                            });
+                        });
+                    }
                 }
             });
         }
@@ -730,9 +714,9 @@ app.put("/pay-loan", (req, res) => {
 });
 
 // READ list of Unpaid Loans
-app.get("/list-loans", (req, res) => {
-    let bankUserId = req.body.bankUserId;
-    let sql = `SELECT * FROM Loan WHERE BankUserId = ?`;
+app.get("/list-loans/:bankUserId", (req, res) => {
+    let bankUserId = req.params.bankUserId;
+    let sql = `SELECT * FROM Loan WHERE BankUserId = ? AND Amount != 0`;
     db.all(sql, [bankUserId], (err, loans) => {
         if (err) {
             res.status(400).json({
@@ -741,17 +725,9 @@ app.get("/list-loans", (req, res) => {
             });
         }
         console.log('loans', loans);
-        // Eliminate Paid Loans
-        for (i = 0; i < loans.length; i++) {
-            if (loans[i].Amount == 0) {
-                loans.splice(i, 1); // eliminate element from Array
-                i--;
-            }
-        }
-        console.log('loans -- ', loans);
         if (!loans.length) {
             res.status(400).json({
-                message: 'No Loans are available for this User!',
+                message: 'No Unpaid Loans are available for this User!'
             });
         }
         res.status(200).json({
