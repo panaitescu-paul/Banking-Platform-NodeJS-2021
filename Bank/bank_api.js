@@ -6,7 +6,9 @@ const PORT = 3001;
 let app = express();
 app.use(express.json());
 
-let db = new sqlite3.Database('./db/bank.db', (err) => {
+// Use the long path for making the gateway work and the short path when running locally
+let db = new sqlite3.Database('../../Bank/db/bank.db', (err) => {
+// let db = new sqlite3.Database('./db/bank.db', (err) => {
     if(err) {
         return console.log(err.message);
     }
