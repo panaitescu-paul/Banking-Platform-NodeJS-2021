@@ -44,9 +44,6 @@ db.run(`CREATE TABLE IF NOT EXISTS SkatUserYear(
     FOREIGN KEY(SkatYearId) REFERENCES SkatYear(Id))`
 );
 
-
-
-
 // -------------------
 // |   Skat User API   |
 // -------------------

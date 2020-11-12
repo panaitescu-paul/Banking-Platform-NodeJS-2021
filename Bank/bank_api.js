@@ -390,6 +390,7 @@ app.post("/add-deposit", (req, res) => {
     let bankUserId = req.body.bankUserId;
     let sqlGetBankUser = `SELECT * FROM BankUser WHERE Id = ?`;
     let sqlAddDeposit = `INSERT INTO Deposit(BankUserId, Amount) VALUES(?, ?)`;
+    let sqlUpdateAccount = `UPDATE Account SET InterestRate = ?, ModifiedAt = ? WHERE BankUserId = ?`;
     db.all(sqlGetBankUser, [bankUserId], (err, bankUser) => {
         if (err) {
             res.status(400).json({
@@ -410,6 +411,23 @@ app.post("/add-deposit", (req, res) => {
             } else {
                 axios.post('http://localhost:7071/api/Bank_Interest_Rate', {depositAmount: amount}).then(response =>{
                     let result = response.data;
+                    let date = new Date();
+                    let year = date.getFullYear();
+                    let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                    let day = ("0" + date.getDate()).slice(-2);
+                    let hours = ("0" + date.getHours()).slice(-2);
+                    let minutes = ("0" + date.getMinutes()).slice(-2);
+                    let seconds = ("0" + date.getSeconds()).slice(-2);
+                    let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+                    db.run(sqlUpdateAccount, [result, modifiedAt, bankUserId], (err) => {
+                        if (err) {
+                            res.status(400).json({
+                                message: 'The Account could not be updated!',
+                                error: err.message
+                            });
+                            console.log(err.message);
+                        }
+                    });
                     db.run(sqlAddDeposit, [bankUserId, result], (err) => {
                         if (err) {
                             res.status(400).json({
@@ -483,29 +501,25 @@ app.post("/withdraw-money", (req, res) => {
             }
             console.log("bankUser", bankUser[0]);
             if(bankUser.length) {
-                db.all(sqlGetAccount, [bankUser[0].Id], (err, accounts) => {
+                db.all(sqlGetAccount, [bankUser[0].Id], (err, account) => {
                     if (err) {
                         res.status(400).json({
                             error: err
                         });
                         console.log(err);
                     }
-                    console.log("accounts", accounts);
-                    if(accounts.length) {
+                    console.log("account", account[0]);
+                    if(account.length) {
                         let withdraw = false;
                         let id = "";
                         let amountBeforeWithdraw = "";
-                        for (let i = 0; i < accounts.length; i++) {
-                            if (accounts[i].Amount - amount >= 0) {
-                                withdraw = true;
-                                id = accounts[i].Id;
-                                amountBeforeWithdraw = accounts[i].Amount;
-                                break;
-                            }
+
+                        if (account[0].Amount - amount >= 0) {
+                            withdraw = true;
+                            id = account[0].Id;
+                            amountBeforeWithdraw = account[0].Amount;
                         }
-                        console.log(withdraw);
-                        console.log(id);
-                        console.log(amountBeforeWithdraw);
+
                         if (withdraw) {
                             let date = new Date();
                             let year = date.getFullYear();
@@ -531,12 +545,12 @@ app.post("/withdraw-money", (req, res) => {
                             });
                         } else {
                             res.status(404).json({
-                                message: 'You do not have enough money in any of your accounts!',
+                                message: 'You do not have enough money in your account!',
                             });
                         }
                     } else {
                         res.status(404).json({
-                            message: `No accounts found for the bank user with the id ${bankUser.Id}!`
+                            message: `No account found for the bank user with the id ${bankUser.Id}!`
                         });
                     }
                 });
