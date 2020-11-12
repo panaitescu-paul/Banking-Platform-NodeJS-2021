@@ -233,23 +233,23 @@ app.post("/skat-year", (req, res) => {
     });
 });
 
-// // READ ALL Skat Users
-// app.get("/skat-user", (req, res) => {
-//     let sql = `SELECT * FROM SkatUser`;
-//     db.all(sql, [], (err, users) => {
-//         if (err) {
-//             res.status(400).json({
-//                 message: 'The Skat Users could not be showed!',
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//
-//         res.status(200).json({
-//             users
-//         });
-//     });
-// });
+// READ ALL Skat Years
+app.get("/skat-year", (req, res) => {
+    let sql = `SELECT * FROM SkatYear`;
+    db.all(sql, [], (err, records) => {
+        if (err) {
+            res.status(400).json({
+                message: 'The Skat Years could not be showed!',
+                error: err
+            });
+            console.log(err);
+        }
+
+        res.status(200).json({
+            records
+        });
+    });
+});
 //
 // // READ Skat User by userId
 // app.get("/skat-user/:userId", (req, res) => {
