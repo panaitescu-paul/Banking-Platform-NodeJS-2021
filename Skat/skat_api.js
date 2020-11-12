@@ -250,30 +250,30 @@ app.get("/skat-year", (req, res) => {
         });
     });
 });
-//
-// // READ Skat User by userId
-// app.get("/skat-user/:userId", (req, res) => {
-//     console.log("req.params.userId: ", req.params.userId);
-//     let sql = `SELECT * FROM SkatUser WHERE UserId = ?`;
-//
-//     db.all(sql, [req.params.userId], (err, users) => {
-//         if (err) {
-//             res.status(400).json({
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//         if(users.length) {
-//             res.status(200).json({
-//                 users
-//             });
-//         } else {
-//             res.status(404).json({
-//                 message: `No Skat User was found with the userId ${req.params.userId}!`
-//             });
-//         }
-//     });
-// });
+
+// READ Skat Year by Id
+app.get("/skat-year/:id", (req, res) => {
+    console.log("req.params.userId: ", req.params.id);
+    let sql = `SELECT * FROM SkatYear WHERE Id = ?`;
+
+    db.all(sql, [req.params.id], (err, years) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        if(years.length) {
+            res.status(200).json({
+                years
+            });
+        } else {
+            res.status(404).json({
+                message: `No Skat Year was found with the Id ${req.params.id}!`
+            });
+        }
+    });
+});
 //
 // // UPDATE Account by Id
 // app.put("/skat-user/:id", (req, res) => {
