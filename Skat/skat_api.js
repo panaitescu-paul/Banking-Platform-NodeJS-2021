@@ -355,6 +355,62 @@ app.delete("/skat-year/:id", (req, res) => {
     });
 });
 
+// Pay taxes endpoint
+app.post("/pay-taxes", (req, res) => {
+    let userId = req.body.userId;
+    let totalAmount = req.body.totalAmount;
+    let sqlGet = `SELECT * FROM SkatUserYear WHERE UserId = ?`;
+
+    axios.get(`http://localhost:3001/bank`).then(response => {
+        console.log("Response: ", response.data.bankUsers);
+        let bankUsers = response.data.bankUsers;
+
+        let isFound = false;
+        for (let i = 0; i < bankUsers.length; i++) {
+            if (bankUsers[i].UserId === userId) {
+                isFound = true;
+            }
+        }
+
+        if (!isFound) {
+            res.status(404).json({
+                message: `No User was found with the id ${userId}!`
+            });
+        } else {
+            db.all(sqlGet, [userId], (err, skatUserYears) => {
+                if (err) {
+                    res.status(400).json({
+                        error: err
+                    });
+                    console.log(err);
+                } else {
+                    if(skatUserYears.length) {
+                        let countUnpaidTaxesPerYear = 0;
+                        for (let i = 0; i < skatUserYears.length; i++) {
+                            if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {
+                                countUnpaidTaxesPerYear++;
+                            }
+                        }
+
+                    } else {
+                        res.status(404).json({
+                            message: `No Skat User Years was found for the user with id ${userId}!`
+                        });
+                    }
+                }
+
+            });
+        }
+    }).catch(err =>{
+        if(err){
+            res.status(400).json({
+                message: err
+            });
+            console.log(err);
+        }
+    });
+});
+
 app.listen(PORT, HOSTNAME, (err) => {
     if(err){
         console.log(err);
