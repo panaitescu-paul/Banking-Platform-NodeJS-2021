@@ -13,6 +13,9 @@ let db = new sqlite3.Database('./db/skat.db', (err) => {
     console.log("Connected to database!")
 });
 
+// For Referential Integrity
+db.get("PRAGMA foreign_keys = ON");
+
 // -------------------
 // |  SQLITE Tables  |
 // -------------------
@@ -40,8 +43,8 @@ db.run(`CREATE TABLE IF NOT EXISTS SkatUserYear(
     UserId INTEGER NOT NULL,
     IsPaid INTEGER DEFAULT 0,
     Amount REAL NOT NULL,
-    FOREIGN KEY(SkatUserId) REFERENCES SkatUser(Id),
-    FOREIGN KEY(SkatYearId) REFERENCES SkatYear(Id))`
+    FOREIGN KEY(SkatUserId) REFERENCES SkatUser(Id) ON DELETE CASCADE,
+    FOREIGN KEY(SkatYearId) REFERENCES SkatYear(Id) ON DELETE CASCADE)`
 );
 
 // -------------------
@@ -318,7 +321,6 @@ app.put("/skat-year/:id", (req, res) => {
         }
     });
 });
-
 
 // DELETE Skat Year by Id
 app.delete("/skat-year/:id", (req, res) => {
