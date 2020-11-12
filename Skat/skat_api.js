@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const express = require("express");
 const axios = require('axios');
 const HOSTNAME = 'localhost';
-const PORT = 3001;
+const PORT = 3002;
 let app = express();
 app.use(express.json());
 
@@ -71,31 +71,23 @@ app.post("/skat-user", (req, res) => {
     });
 });
 
-// db.run(`CREATE TABLE IF NOT EXISTS SkatUser(
-//     Id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-//     UserId INTEGER NOT NULL,
-//     CreatedAt DATE DEFAULT (datetime('now','localtime')),
-//     IsActive INTEGER DEFAULT 1)`
-// );
+// READ ALL Skat Users
+app.get("/skat-user", (req, res) => {
+    let sql = `SELECT * FROM SkatUser`;
+    db.all(sql, [], (err, users) => {
+        if (err) {
+            res.status(400).json({
+                message: 'The Skat Users could not be showed!',
+                error: err
+            });
+            console.log(err);
+        }
 
-//
-// // READ Accounts
-// app.get("/account", (req, res) => {
-//     let sql = `SELECT * FROM Account`;
-//     db.all(sql, [], (err, accounts) => {
-//         if (err) {
-//             res.status(400).json({
-//                 message: 'The Accounts could not be showed!',
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//
-//         res.status(200).json({
-//             accounts
-//         });
-//     });
-// });
+        res.status(200).json({
+            users
+        });
+    });
+});
 //
 // // READ Account by Id
 // app.get("/account/:id", (req, res) => {
