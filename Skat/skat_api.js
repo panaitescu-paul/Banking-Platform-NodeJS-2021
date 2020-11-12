@@ -88,30 +88,30 @@ app.get("/skat-user", (req, res) => {
         });
     });
 });
-//
-// // READ Account by Id
-// app.get("/account/:id", (req, res) => {
-//     console.log("req.params.id: ", req.params.id);
-//     let sql = `SELECT * FROM Account WHERE Id = ?`;
-//
-//     db.all(sql, [req.params.id], (err, account) => {
-//         if (err) {
-//             res.status(400).json({
-//                 error: err
-//             });
-//             console.log(err);
-//         }
-//         if(account.length) {
-//             res.status(200).json({
-//                 account
-//             });
-//         } else {
-//             res.status(404).json({
-//                 message: `No Account was found with the id ${req.params.id}!`
-//             });
-//         }
-//     });
-// });
+
+// READ Skat User by userId
+app.get("/skat-user/:userId", (req, res) => {
+    console.log("req.params.userId: ", req.params.userId);
+    let sql = `SELECT * FROM SkatUser WHERE UserId = ?`;
+
+    db.all(sql, [req.params.userId], (err, users) => {
+        if (err) {
+            res.status(400).json({
+                error: err
+            });
+            console.log(err);
+        }
+        if(users.length) {
+            res.status(200).json({
+                users
+            });
+        } else {
+            res.status(404).json({
+                message: `No Skat User was found with the userId ${req.params.userId}!`
+            });
+        }
+    });
+});
 //
 // // UPDATE Account by Id
 // app.put("/account/:id", (req, res) => {
