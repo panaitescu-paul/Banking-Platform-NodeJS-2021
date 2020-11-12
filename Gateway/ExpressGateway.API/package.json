@@ -1,0 +1,13 @@
+{
+  "name": "ExpressGateway.API",
+  "description": "Express Gateway Instance Bootstraped from Command Line",
+  "repository": {},
+  "license": "UNLICENSED",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-gateway": "^1.16.10",
+    "sqlite3": "^5.0.0"
+  }
+}
