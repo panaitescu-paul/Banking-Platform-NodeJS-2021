@@ -1,0 +1,93 @@
+http:
+  port: 8080
+admin:
+  port: 9876
+  host: localhost
+apiEndpoints:
+  api:
+    host: localhost
+    paths: '/ip'
+  borger:
+    host: localhost
+    paths: ['/borger', '/borger/*']
+  address:
+    host: localhost
+    paths: ['/address', '/address/*']
+  bank:
+    host: localhost
+    paths: ['/bank', '/bank/*']
+  account:
+    host: localhost
+    paths: ['/account', '/account/*', '/withdraw-money']
+  deposit:
+    host: localhost
+    paths: ['/add-deposit', '/list-deposits/*']
+  loan:
+    host: localhost
+    paths: ['/create-loan', '/pay-loan', '/list-loans/*']
+  interestRate:
+    host: localhost
+    paths: ['/api/Bank_Interest_Rate']
+  loanAlgorithm:
+    host: localhost
+    paths: ['/api/Loan_Algorithm']
+  taxCalculator:
+    host: localhost
+    paths: ['/api/Skat_Tax_Calculator']
+serviceEndpoints:
+  httpbin:
+    url: 'https://httpbin.org'
+  borgerService:
+    url: 'http://localhost:3000'
+  bankService:
+    url: 'http://localhost:3001'
+  functionService:
+    url: 'http://localhost:7071'
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+pipelines:
+  default:
+    apiEndpoints:
+      - api
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: httpbin 
+              changeOrigin: true
+  borgerPipeline:
+    apiEndpoints:
+      - borger
+      - address
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: borgerService
+              changeOrigin: true
+  bankPipeline:
+    apiEndpoints:
+      - bank
+      - account
+      - deposit
+      - loan
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: bankService
+              changeOrigin: true
+  functionsPipeline:
+    apiEndpoints:
+      - interestRate
+      - loanAlgorithm
+      - taxCalculator
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: functionService
+              changeOrigin: true

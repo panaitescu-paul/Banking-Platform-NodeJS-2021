@@ -5,9 +5,10 @@ const HOSTNAME = 'localhost';
 const PORT = 3000;
 let app = express();
 app.use(express.json());
-require('dotenv').config();
 
-let db = new sqlite3.Database('./db/borger.db', (err) => {
+// Use the long path for making the gateway work and the short path when running locally
+let db = new sqlite3.Database('../../Borger/db/borger.db', (err) => {
+// let db = new sqlite3.Database('./db/borger.db', (err) => {
     if(err) {
         return console.log(err.message);
     }
