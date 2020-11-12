@@ -25,6 +25,12 @@ apiEndpoints:
   loan:
     host: localhost
     paths: ['/create-loan', '/pay-loan', '/list-loans/*']
+  skatUser:
+    host: localhost
+    paths: ['/skat-user', '/skat-user/*', '/pay-taxes']
+  skatYear:
+    host: localhost
+    paths: ['/skat-year', '/skat-year/*']
   interestRate:
     host: localhost
     paths: ['/api/Bank_Interest_Rate']
@@ -41,6 +47,8 @@ serviceEndpoints:
     url: 'http://localhost:3000'
   bankService:
     url: 'http://localhost:3001'
+  skatService:
+    url: 'http://localhost:3002'
   functionService:
     url: 'http://localhost:7071'
   functionPyService:
@@ -82,6 +90,15 @@ pipelines:
       - proxy:
           - action:
               serviceEndpoint: bankService
+              changeOrigin: true
+  skatPipeline:
+    apiEndpoints:
+      - skatUser
+      - skatYear
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: skatService
               changeOrigin: true
   functionsPipeline:
     apiEndpoints:

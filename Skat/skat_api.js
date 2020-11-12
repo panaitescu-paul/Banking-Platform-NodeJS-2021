@@ -6,7 +6,8 @@ const PORT = 3002;
 let app = express();
 app.use(express.json());
 
-let db = new sqlite3.Database('./db/skat.db', (err) => {
+
+let db = new sqlite3.Database('../../Skat/db/skat.db', (err) => {
     if(err) {
         return console.log(err.message);
     }
@@ -63,11 +64,12 @@ app.post("/skat-user", (req, res) => {
                 error: err.message
             });
             console.log(err.message);
+        } else {
+            console.log(`A new row has been inserted!`);
+            res.status(201).json({
+                message: 'Skat User successfully created!',
+            });
         }
-        console.log(`A new row has been inserted!`);
-        res.status(201).json({
-            message: 'Skat User successfully created!',
-        });
     });
 });
 
@@ -81,11 +83,11 @@ app.get("/skat-user", (req, res) => {
                 error: err
             });
             console.log(err);
+        } else {
+            res.status(200).json({
+                users
+            });
         }
-
-        res.status(200).json({
-            users
-        });
     });
 });
 
@@ -100,15 +102,16 @@ app.get("/skat-user/:userId", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        if(users.length) {
-            res.status(200).json({
-                users
-            });
         } else {
-            res.status(404).json({
-                message: `No Skat User was found with the userId ${req.params.userId}!`
-            });
+            if(users.length) {
+                res.status(200).json({
+                    users
+                });
+            } else {
+                res.status(404).json({
+                    message: `No Skat User was found with the userId ${req.params.userId}!`
+                });
+            }
         }
     });
 });
@@ -125,25 +128,26 @@ app.put("/skat-user/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Skat User: ", skatUser);
-        if(!skatUser.length) {
-            res.status(404).json({
-                message: `No Skat User found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlUpdate, [userId, isActive, req.params.id], (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The Skat User could not be updated!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Skat user successfully updated!',
+            if(!skatUser.length) {
+                res.status(404).json({
+                    message: `No Skat User found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlUpdate, [userId, isActive, req.params.id], (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The Skat User could not be updated!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(201).json({
+                            message: 'Skat user successfully updated!',
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -159,25 +163,26 @@ app.delete("/skat-user/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("User: ", user);
-        if(!user.length) {
-            res.status(404).json({
-                message: `No Skat User was found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlDelete, req.params.id, (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The Skat User could not be deleted!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(200).json({
-                    message: 'Skat User successfully deleted!'
+            if(!user.length) {
+                res.status(404).json({
+                    message: `No Skat User was found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlDelete, req.params.id, (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The Skat User could not be deleted!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(200).json({
+                            message: 'Skat User successfully deleted!'
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -203,36 +208,38 @@ app.post("/skat-year", (req, res) => {
                 error: err.message
             });
             console.log(err.message);
-        }
-        console.log(`A new row has been inserted!`);
-        skatYearId = this.lastID; // get the id of the record
-        console.warn("inserted id:", this.lastID);
-        db.all(sqlGet, [], (err, users) => {
-            if (err) {
-                res.status(400).json({
-                    message: 'The Skat Users could not be showed!',
-                    error: err
-                });
-                console.log(err);
-            }
-            for (i = 0; i < users.length; i++) {
-                // Add record in the Skat User Year Table for each Skat User
-                console.log("users[i].Id" + users[i].Id);
-                db.run(sqlSkatUserYear, [users[i].Id, skatYearId, users[i].UserId, 0], (err) => {
-                    if (err) {
-                        res.status(400).json({
-                            message: 'The Skat User Year could not be created!',
-                            error: err.message
+        } else {
+            console.log(`A new row has been inserted!`);
+            skatYearId = this.lastID; // get the id of the record
+            console.warn("inserted id:", this.lastID);
+            db.all(sqlGet, [], (err, users) => {
+                if (err) {
+                    res.status(400).json({
+                        message: 'The Skat Users could not be showed!',
+                        error: err
+                    });
+                    console.log(err);
+                } else {
+                    for (let i = 0; i < users.length; i++) {
+                        // Add record in the Skat User Year Table for each Skat User
+                        console.log("users[i].Id" + users[i].Id);
+                        db.run(sqlSkatUserYear, [users[i].Id, skatYearId, users[i].UserId, 0], (err) => {
+                            if (err) {
+                                res.status(400).json({
+                                    message: 'The Skat User Year could not be created!',
+                                    error: err.message
+                                });
+                                console.log(err.message);
+                            }
+                            console.log(`A new Skat User Year has been inserted!`);
                         });
-                        console.log(err.message);
                     }
-                    console.log(`A new Skat User Year has been inserted!`);
-                });
-            }
-        });
-        res.status(200).json({
-            message: 'Skat Year successfully created!'
-        });
+                }
+            });
+            res.status(200).json({
+                message: 'Skat Year successfully created!'
+            });
+        }
     });
 });
 
@@ -246,11 +253,11 @@ app.get("/skat-year", (req, res) => {
                 error: err
             });
             console.log(err);
+        } else {
+            res.status(200).json({
+                records
+            });
         }
-
-        res.status(200).json({
-            records
-        });
     });
 });
 
@@ -265,15 +272,16 @@ app.get("/skat-year/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        if(years.length) {
-            res.status(200).json({
-                years
-            });
         } else {
-            res.status(404).json({
-                message: `No Skat Year was found with the Id ${req.params.id}!`
-            });
+            if(years.length) {
+                res.status(200).json({
+                    years
+                });
+            } else {
+                res.status(404).json({
+                    message: `No Skat Year was found with the Id ${req.params.id}!`
+                });
+            }
         }
     });
 });
@@ -291,33 +299,34 @@ app.put("/skat-year/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Skat Year: ", skatYear);
-        if(!skatYear.length) {
-            res.status(404).json({
-                message: `No Skat Year found with the id ${req.params.id}!`
-            });
         } else {
-            let date = new Date();
-            let year = date.getFullYear();
-            let month = ("0" + (date.getMonth() + 1)).slice(-2);
-            let day = ("0" + date.getDate()).slice(-2);
-            let hours = ("0" + date.getHours()).slice(-2);
-            let minutes = ("0" + date.getMinutes()).slice(-2);
-            let seconds = ("0" + date.getSeconds()).slice(-2);
-            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
-            db.run(sqlUpdate, [label, modifiedAt, startDate, endDate, req.params.id], (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The Skat Year could not be updated!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Skat Year successfully updated!',
+            if(!skatYear.length) {
+                res.status(404).json({
+                    message: `No Skat Year found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                let date = new Date();
+                let year = date.getFullYear();
+                let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                let day = ("0" + date.getDate()).slice(-2);
+                let hours = ("0" + date.getHours()).slice(-2);
+                let minutes = ("0" + date.getMinutes()).slice(-2);
+                let seconds = ("0" + date.getSeconds()).slice(-2);
+                let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+                db.run(sqlUpdate, [label, modifiedAt, startDate, endDate, req.params.id], (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The Skat Year could not be updated!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(201).json({
+                            message: 'Skat Year successfully updated!',
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -332,25 +341,26 @@ app.delete("/skat-year/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("User: ", year);
-        if(!year.length) {
-            res.status(404).json({
-                message: `No Skat Year was found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlDelete, req.params.id, (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The Skat Year could not be deleted!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(200).json({
-                    message: 'Skat Year successfully deleted!'
+            if(!year.length) {
+                res.status(404).json({
+                    message: `No Skat Year was found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlDelete, req.params.id, (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The Skat Year could not be deleted!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(200).json({
+                            message: 'Skat Year successfully deleted!'
+                        });
+                    }
+                });
+            }
         }
     });
 });
