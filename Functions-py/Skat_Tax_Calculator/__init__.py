@@ -1,7 +1,7 @@
 import logging
 import azure.functions as func
 import json
-
+# func host start --port 7072
 def main(req: func.HttpRequest) -> func.HttpResponse:
     try:
         req_body = req.get_json()

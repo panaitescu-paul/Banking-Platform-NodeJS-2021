@@ -6,9 +6,7 @@ const PORT = 3001;
 let app = express();
 app.use(express.json());
 
-// Use the long path for making the gateway work and the short path when running locally
 let db = new sqlite3.Database('../../Bank/db/bank.db', (err) => {
-// let db = new sqlite3.Database('./db/bank.db', (err) => {
     if(err) {
         return console.log(err.message);
     }
@@ -70,11 +68,12 @@ app.post("/bank", (req, res) => {
                 error: err.message
             });
             console.log(err.message);
+        } else {
+            console.log(`A new row has been inserted!`);
+            res.status(201).json({
+                message: 'Bank user successfully created!',
+            });
         }
-        console.log(`A new row has been inserted!`);
-        res.status(201).json({
-            message: 'Bank user successfully created!',
-        });
     });
 });
 
@@ -87,11 +86,11 @@ app.get("/bank", (req, res) => {
                 error: err
             });
             console.log(err);
+        } else {
+            res.status(200).json({
+                bankUsers
+            });
         }
-
-        res.status(200).json({
-            bankUsers
-        });
     });
 });
 
@@ -105,15 +104,16 @@ app.get("/bank/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        if(bankUser.length) {
-            res.status(200).json({
-                bankUser
-            });
         } else {
-            res.status(404).json({
-                message: `No bank user found with the id ${req.params.id}!`
-            });
+            if(bankUser.length) {
+                res.status(200).json({
+                    bankUser
+                });
+            } else {
+                res.status(404).json({
+                    message: `No bank user found with the id ${req.params.id}!`
+                });
+            }
         }
     });
 });
@@ -129,33 +129,34 @@ app.put("/bank/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Bank User: ", bankUser);
-        if(!bankUser.length) {
-            res.status(404).json({
-                message: `No bank user found with the id ${req.params.id}!`
-            });
         } else {
-            let date = new Date();
-            let year = date.getFullYear();
-            let month = ("0" + (date.getMonth() + 1)).slice(-2);
-            let day = ("0" + date.getDate()).slice(-2);
-            let hours = ("0" + date.getHours()).slice(-2);
-            let minutes = ("0" + date.getMinutes()).slice(-2);
-            let seconds = ("0" + date.getSeconds()).slice(-2);
-            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
-            db.run(sqlUpdate, [bankUserId, modifiedAt, req.params.id], (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The bank user could not be updated!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Bank user successfully updated!',
+            if(!bankUser.length) {
+                res.status(404).json({
+                    message: `No bank user found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                let date = new Date();
+                let year = date.getFullYear();
+                let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                let day = ("0" + date.getDate()).slice(-2);
+                let hours = ("0" + date.getHours()).slice(-2);
+                let minutes = ("0" + date.getMinutes()).slice(-2);
+                let seconds = ("0" + date.getSeconds()).slice(-2);
+                let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+                db.run(sqlUpdate, [bankUserId, modifiedAt, req.params.id], (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The bank user could not be updated!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(201).json({
+                            message: 'Bank user successfully updated!',
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -170,25 +171,26 @@ app.delete("/bank/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Bank user: ", bankUser);
-        if(!bankUser.length) {
-            res.status(404).json({
-                message: `No bank user found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlDelete, req.params.id, (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The bank user could not be deleted!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Bank user successfully deleted!'
+            if(!bankUser.length) {
+                res.status(404).json({
+                    message: `No bank user found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlDelete, req.params.id, (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The bank user could not be deleted!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(201).json({
+                            message: 'Bank user successfully deleted!'
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -214,35 +216,34 @@ app.post("/account", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Bank user: ", bankUser);
-        if(!bankUser.length) {
-            res.status(404).json({
-                message: `No Bank User found with the id ${bankUserId}!`
-            });
         } else {
-            db.run(sqlAccount, [bankUserId, accountNo, isStudent, interestRate, amount], (err) => {
-                if (err) {
-                    if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
-                        res.status(400).json({
-                            message: 'The Account Number already exists!',
-                            error: err.message
-                        });
+            if(!bankUser.length) {
+                res.status(404).json({
+                    message: `No Bank User found with the id ${bankUserId}!`
+                });
+            } else {
+                db.run(sqlAccount, [bankUserId, accountNo, isStudent, interestRate, amount], (err) => {
+                    if (err) {
+                        if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
+                            res.status(400).json({
+                                message: 'The Account Number already exists!',
+                                error: err.message
+                            });
+                        } else {
+                            res.status(400).json({
+                                message: 'The Account could not be created!',
+                                error: err.message
+                            });
+                            console.log(err.message);
+                        }
                     } else {
-                        res.status(400).json({
-                            message: 'The Account could not be created!',
-                            error: err.message
+                        console.log(`A new row has been inserted!`);
+                        res.status(201).json({
+                            message: 'Account successfully created!',
                         });
-                        console.log(err.message);
                     }
-                } else {
-                    console.log(`A new row has been inserted!`);
-                    res.status(201).json({
-                        message: 'Account successfully created!',
-                    });
-                }
-
-            });
+                });
+            }
         }
     });
 });
@@ -257,11 +258,11 @@ app.get("/account", (req, res) => {
                 error: err
             });
             console.log(err);
+        } else {
+            res.status(200).json({
+                accounts
+            });
         }
-
-        res.status(200).json({
-            accounts
-        });
     });
 });
 
@@ -276,15 +277,16 @@ app.get("/account/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        if(account.length) {
-            res.status(200).json({
-                account
-            });
         } else {
-            res.status(404).json({
-                message: `No Account was found with the id ${req.params.id}!`
-            });
+            if(account.length) {
+                res.status(200).json({
+                    account
+                });
+            } else {
+                res.status(404).json({
+                    message: `No Account was found with the id ${req.params.id}!`
+                });
+            }
         }
     });
 });
@@ -308,40 +310,42 @@ app.put("/account/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Account: ", account);
-        if(!account.length) {
-            res.status(404).json({
-                message: `No Account was found with the id ${req.params.id}!`
-            });
         } else {
-            let date = new Date();
-            let year = date.getFullYear();
-            let month = ("0" + (date.getMonth() + 1)).slice(-2);
-            let day = ("0" + date.getDate()).slice(-2);
-            let hours = ("0" + date.getHours()).slice(-2);
-            let minutes = ("0" + date.getMinutes()).slice(-2);
-            let seconds = ("0" + date.getSeconds()).slice(-2);
-            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+            if(!account.length) {
+                res.status(404).json({
+                    message: `No Account was found with the id ${req.params.id}!`
+                });
+            } else {
+                let date = new Date();
+                let year = date.getFullYear();
+                let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                let day = ("0" + date.getDate()).slice(-2);
+                let hours = ("0" + date.getHours()).slice(-2);
+                let minutes = ("0" + date.getMinutes()).slice(-2);
+                let seconds = ("0" + date.getSeconds()).slice(-2);
+                let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
 
-            db.run(sqlUpdate, [bankUserId, accountNo, isStudent, interestRate, amount, modifiedAt, req.params.id], (err) => {
-                if (err) {
-                    if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
-                        res.status(400).json({
-                            message: 'The Account Number already exists!',
-                            error: err.message
+                db.run(sqlUpdate, [bankUserId, accountNo, isStudent, interestRate, amount, modifiedAt, req.params.id], (err) => {
+                    if (err) {
+                        if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
+                            res.status(400).json({
+                                message: 'The Account Number already exists!',
+                                error: err.message
+                            });
+                        } else {
+                            res.status(400).json({
+                                message: 'The Account could not be updated!',
+                                error: err.message
+                            });
+                            console.log(err.message);
+                        }
+                    } else {
+                        res.status(201).json({
+                            message: 'Account successfully updated!',
                         });
                     }
-                    res.status(400).json({
-                        message: 'The Account could not be updated!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Account successfully updated!',
                 });
-            });
+            }
         }
     });
 });
@@ -357,25 +361,26 @@ app.delete("/account/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Account: ", account);
-        if(!account.length) {
-            res.status(404).json({
-                message: `No Account was found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlDelete, req.params.id, (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The Account could not be deleted!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(200).json({
-                    message: 'Account successfully deleted!'
+            if(!account.length) {
+                res.status(404).json({
+                    message: `No Account was found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlDelete, req.params.id, (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The Account could not be deleted!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(200).json({
+                            message: 'Account successfully deleted!'
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -397,58 +402,59 @@ app.post("/add-deposit", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Bank user: ", bankUser);
-        if(!bankUser.length) {
-            res.status(404).json({
-                message: `No Bank User found with the id ${bankUserId}!`
-            });
         } else {
-            if (amount <= 0 || amount === null) {
+            if(!bankUser.length) {
                 res.status(404).json({
-                    message: 'The amount deposited cannot be null or negative!',
+                    message: `No Bank User found with the id ${bankUserId}!`
                 });
             } else {
-                axios.post('http://localhost:7071/api/Bank_Interest_Rate', {depositAmount: amount}).then(response =>{
-                    let result = response.data;
-                    let date = new Date();
-                    let year = date.getFullYear();
-                    let month = ("0" + (date.getMonth() + 1)).slice(-2);
-                    let day = ("0" + date.getDate()).slice(-2);
-                    let hours = ("0" + date.getHours()).slice(-2);
-                    let minutes = ("0" + date.getMinutes()).slice(-2);
-                    let seconds = ("0" + date.getSeconds()).slice(-2);
-                    let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
-                    db.run(sqlUpdateAccount, [result, modifiedAt, bankUserId], (err) => {
-                        if (err) {
-                            res.status(400).json({
-                                message: 'The Account could not be updated!',
-                                error: err.message
+                if (amount <= 0 || amount === null) {
+                    res.status(404).json({
+                        message: 'The amount deposited cannot be null or negative!',
+                    });
+                } else {
+                    axios.post('http://localhost:7071/api/Bank_Interest_Rate', {depositAmount: amount}).then(response =>{
+                        let result = response.data;
+                        let date = new Date();
+                        let year = date.getFullYear();
+                        let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                        let day = ("0" + date.getDate()).slice(-2);
+                        let hours = ("0" + date.getHours()).slice(-2);
+                        let minutes = ("0" + date.getMinutes()).slice(-2);
+                        let seconds = ("0" + date.getSeconds()).slice(-2);
+                        let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+                        db.run(sqlUpdateAccount, [result, modifiedAt, bankUserId], (err) => {
+                            if (err) {
+                                res.status(400).json({
+                                    message: 'The Account could not be updated!',
+                                    error: err.message
+                                });
+                                console.log(err.message);
+                            }
+                        });
+                        db.run(sqlAddDeposit, [bankUserId, result], (err) => {
+                            if (err) {
+                                res.status(400).json({
+                                    message: 'The Deposit could not be created!',
+                                    error: err.message
+                                });
+                                console.log(err.message);
+                            } else {
+                                console.log(`A new row has been inserted!`);
+                                res.status(201).json({
+                                    message: 'Deposit successfully created!',
+                                });
+                            }
+                        });
+                    }).catch(err =>{
+                        if(err){
+                            console.log(err);
+                            res.status(403).json({
+                                message: err
                             });
-                            console.log(err.message);
                         }
                     });
-                    db.run(sqlAddDeposit, [bankUserId, result], (err) => {
-                        if (err) {
-                            res.status(400).json({
-                                message: 'The Deposit could not be created!',
-                                error: err.message
-                            });
-                            console.log(err.message);
-                        }
-                        console.log(`A new row has been inserted!`);
-                        res.status(201).json({
-                            message: 'Deposit successfully created!',
-                        });
-                    });
-                }).catch(err =>{
-                    if(err){
-                        console.log(err);
-                        res.status(403).json({
-                            message: err
-                        });
-                    }
-                });
+                }
             }
         }
     });
@@ -465,16 +471,16 @@ app.get("/list-deposits/:bankUserId", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Deposits", deposits);
-        if(deposits.length) {
-            res.status(200).json({
-                deposits
-            });
         } else {
-            res.status(404).json({
-                message: `No deposits found for the bank user with the id ${req.params.bankUserId}!`
-            });
+            if(deposits.length) {
+                res.status(200).json({
+                    deposits
+                });
+            } else {
+                res.status(404).json({
+                    message: `No deposits found for the bank user with the id ${req.params.bankUserId}!`
+                });
+            }
         }
     });
 });
@@ -498,66 +504,66 @@ app.post("/withdraw-money", (req, res) => {
                     error: err
                 });
                 console.log(err);
-            }
-            console.log("bankUser", bankUser[0]);
-            if(bankUser.length) {
-                db.all(sqlGetAccount, [bankUser[0].Id], (err, account) => {
-                    if (err) {
-                        res.status(400).json({
-                            error: err
-                        });
-                        console.log(err);
-                    }
-                    console.log("account", account[0]);
-                    if(account.length) {
-                        let withdraw = false;
-                        let id = "";
-                        let amountBeforeWithdraw = "";
+            } else {
+                if(bankUser.length) {
+                    db.all(sqlGetAccount, [bankUser[0].Id], (err, account) => {
+                        if (err) {
+                            res.status(400).json({
+                                error: err
+                            });
+                            console.log(err);
+                        } else {
+                            if(account.length) {
+                                let withdraw = false;
+                                let id = "";
+                                let amountBeforeWithdraw = "";
 
-                        if (account[0].Amount - amount >= 0) {
-                            withdraw = true;
-                            id = account[0].Id;
-                            amountBeforeWithdraw = account[0].Amount;
-                        }
+                                if (account[0].Amount - amount >= 0) {
+                                    withdraw = true;
+                                    id = account[0].Id;
+                                    amountBeforeWithdraw = account[0].Amount;
+                                }
 
-                        if (withdraw) {
-                            let date = new Date();
-                            let year = date.getFullYear();
-                            let month = ("0" + (date.getMonth() + 1)).slice(-2);
-                            let day = ("0" + date.getDate()).slice(-2);
-                            let hours = ("0" + date.getHours()).slice(-2);
-                            let minutes = ("0" + date.getMinutes()).slice(-2);
-                            let seconds = ("0" + date.getSeconds()).slice(-2);
-                            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
-                            let amountAfterWithdraw = amountBeforeWithdraw - amount;
-                            db.run(sqlUpdateAccount, [amountAfterWithdraw, modifiedAt, id], (err) => {
-                                if (err) {
-                                    res.status(400).json({
-                                        message: 'The Account could not be updated!',
-                                        error: err.message
+                                if (withdraw) {
+                                    let date = new Date();
+                                    let year = date.getFullYear();
+                                    let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                                    let day = ("0" + date.getDate()).slice(-2);
+                                    let hours = ("0" + date.getHours()).slice(-2);
+                                    let minutes = ("0" + date.getMinutes()).slice(-2);
+                                    let seconds = ("0" + date.getSeconds()).slice(-2);
+                                    let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+                                    let amountAfterWithdraw = amountBeforeWithdraw - amount;
+                                    db.run(sqlUpdateAccount, [amountAfterWithdraw, modifiedAt, id], (err) => {
+                                        if (err) {
+                                            res.status(400).json({
+                                                message: 'The Account could not be updated!',
+                                                error: err.message
+                                            });
+                                            console.log(err.message);
+                                        } else {
+                                            res.status(201).json({
+                                                message: 'Withdraw successfully completed!',
+                                            });
+                                        }
                                     });
-                                    console.log(err.message);
                                 } else {
-                                    res.status(201).json({
-                                        message: 'Withdraw successfully completed!',
+                                    res.status(404).json({
+                                        message: 'You do not have enough money in your account!',
                                     });
                                 }
-                            });
-                        } else {
-                            res.status(404).json({
-                                message: 'You do not have enough money in your account!',
-                            });
+                            } else {
+                                res.status(404).json({
+                                    message: `No account found for the bank user with the id ${bankUser.Id}!`
+                                });
+                            }
                         }
-                    } else {
-                        res.status(404).json({
-                            message: `No account found for the bank user with the id ${bankUser.Id}!`
-                        });
-                    }
-                });
-            } else {
-                res.status(404).json({
-                    message: `No bank user found for the user with the id ${userId}!`
-                });
+                    });
+                } else {
+                    res.status(404).json({
+                        message: `No bank user found for the user with the id ${userId}!`
+                    });
+                }
             }
         });
     }
@@ -579,60 +585,61 @@ app.post("/create-loan", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Bank user: ", bankUser);
-        if(!bankUser.length) {
-            res.status(404).json({
-                message: `No Bank User found with the id ${bankUserId}!`
-            });
         } else {
-            // Get the sum of all accounts from a certain User
-            axios.get(`http://localhost:3001/account`).then(response => {
-                let accounts = response.data.accounts;
-                console.log('accounts', accounts);
+            if(!bankUser.length) {
+                res.status(404).json({
+                    message: `No Bank User found with the id ${bankUserId}!`
+                });
+            } else {
+                // Get the sum of all accounts from a certain User
+                axios.get(`http://localhost:3001/account`).then(response => {
+                    let accounts = response.data.accounts;
+                    console.log('accounts', accounts);
 
-                for (i = 0; i < accounts.length; i++) {
-                    if (bankUserId === accounts[i].BankUserId) {
-                        totalAccountAmount += accounts[i].Amount;
-                        console.log('totalAccountAmount ++ ', totalAccountAmount);
-                    }
-                }
-                console.log('totalAccountAmount', totalAccountAmount);
-
-                // Check if the Loan is Valid
-                axios.post(`http://localhost:7071/api/Loan_Algorithm`, {
-                    "loan": loanAmount,
-                    "totalAccountAmount": totalAccountAmount
-                }).then((response) => {
-                    console.log(response);
-                    db.run(sqlLoan, [bankUserId, loanAmount], (err) => {
-                        if (err) {
-                            res.status(400).json({
-                                message: 'The Loan could not be created!',
-                                error: err.message
-                            });
-                            console.log(err.message);
+                    for (i = 0; i < accounts.length; i++) {
+                        if (bankUserId === accounts[i].BankUserId) {
+                            totalAccountAmount += accounts[i].Amount;
+                            console.log('totalAccountAmount ++ ', totalAccountAmount);
                         }
-                        console.log(`A new row has been inserted!`);
-                        res.status(201).json({
-                            message: 'Loan successfully created!',
+                    }
+                    console.log('totalAccountAmount', totalAccountAmount);
+
+                    // Check if the Loan is Valid
+                    axios.post(`http://localhost:7071/api/Loan_Algorithm`, {
+                        "loan": loanAmount,
+                        "totalAccountAmount": totalAccountAmount
+                    }).then((response) => {
+                        console.log(response);
+                        db.run(sqlLoan, [bankUserId, loanAmount], (err) => {
+                            if (err) {
+                                res.status(400).json({
+                                    message: 'The Loan could not be created!',
+                                    error: err.message
+                                });
+                                console.log(err.message);
+                            } else {
+                                console.log(`A new row has been inserted!`);
+                                res.status(201).json({
+                                    message: 'Loan successfully created!',
+                                });
+                            }
+                        });
+
+                    }, (error) => {
+                        console.log(error);
+                        res.status(403).json({
+                            message: 'The Loan could not be created! Loan amount is too big!',
                         });
                     });
-
-                }, (error) => {
-                    console.log(error);
-                    res.status(403).json({
-                        message: 'The Loan could not be created! Loan amount is too big!',
-                    });
+                }).catch(err =>{
+                    if(err){
+                        res.status(400).json({
+                            message: 'Could not get the total Account Amount for this User Id!'
+                        });
+                        console.log(err);
+                    }
                 });
-            }).catch(err =>{
-                if(err){
-                    res.status(400).json({
-                        message: 'Could not get the total Account Amount for this User Id!'
-                    });
-                    console.log(err);
-                }
-            });
+            }
         }
     });
 });
@@ -654,77 +661,80 @@ app.put("/pay-loan", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Account: ", account);
-        if(!account.length) {
-            res.status(404).json({
-                message: `No Account was found with the id ${req.params.id}!`
-            });
         } else {
-            let date = new Date();
-            let year = date.getFullYear();
-            let month = ("0" + (date.getMonth() + 1)).slice(-2);
-            let day = ("0" + date.getDate()).slice(-2);
-            let hours = ("0" + date.getHours()).slice(-2);
-            let minutes = ("0" + date.getMinutes()).slice(-2);
-            let seconds = ("0" + date.getSeconds()).slice(-2);
-            let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+            if(!account.length) {
+                res.status(404).json({
+                    message: `No Account was found with the id ${req.params.id}!`
+                });
+            } else {
+                let date = new Date();
+                let year = date.getFullYear();
+                let month = ("0" + (date.getMonth() + 1)).slice(-2);
+                let day = ("0" + date.getDate()).slice(-2);
+                let hours = ("0" + date.getHours()).slice(-2);
+                let minutes = ("0" + date.getMinutes()).slice(-2);
+                let seconds = ("0" + date.getSeconds()).slice(-2);
+                let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
 
-            // Get the Loan Amount
-            db.all(sqlGetLoan, [loanId], (err, loan) => {
-                if (err) {
-                    res.status(400).json({
-                        error: err
-                    });
-                    console.log(err);
-                }
-                if(!loan.length) {
-                    res.status(404).json({
-                        message: `No Loan was found with the id ${loanId}!`
-                    });
-                } else {
-                    loanAmount = loan[0].Amount;
-                    console.log('loanAmount', loanAmount);
-                    console.log('account[0].Id', account[0].Id);
-
-                    accountAmount = account[0].Amount;
-                    console.log('accountAmount', accountAmount);
-
-                    // Obtain new Account Amount after loan substraction
-                    let amount = accountAmount - loanAmount;
-                    console.log('accountAmount', accountAmount);
-                    console.log('loanAmount', loanAmount);
-                    console.log('amount', amount);
-
-                    if (loanAmount > accountAmount) {
+                // Get the Loan Amount
+                db.all(sqlGetLoan, [loanId], (err, loan) => {
+                    if (err) {
                         res.status(400).json({
-                            message: 'Not enough money in the Account to pay the Loan!',
+                            error: err
                         });
+                        console.log(err);
                     } else {
-                        // Substract Amount from Account
-                        db.run(sqlUpdateAccount, [amount, modifiedAt, account[0].Id], (err) => {
-                            if (err) {
+                        if(!loan.length) {
+                            res.status(404).json({
+                                message: `No Loan was found with the id ${loanId}!`
+                            });
+                        } else {
+                            loanAmount = loan[0].Amount;
+                            console.log('loanAmount', loanAmount);
+                            console.log('account[0].Id', account[0].Id);
+
+                            accountAmount = account[0].Amount;
+                            console.log('accountAmount', accountAmount);
+
+                            // Obtain new Account Amount after loan substraction
+                            let amount = accountAmount - loanAmount;
+                            console.log('accountAmount', accountAmount);
+                            console.log('loanAmount', loanAmount);
+                            console.log('amount', amount);
+
+                            if (loanAmount > accountAmount) {
                                 res.status(400).json({
-                                    message: 'The Account could not be updated!',
-                                    error: err.message
+                                    message: 'Not enough money in the Account to pay the Loan!',
+                                });
+                            } else {
+                                // Substract Amount from Account
+                                db.run(sqlUpdateAccount, [amount, modifiedAt, account[0].Id], (err) => {
+                                    if (err) {
+                                        res.status(400).json({
+                                            message: 'The Account could not be updated!',
+                                            error: err.message
+                                        });
+                                    } else {
+                                        // Set Loan Amount to 0
+                                        db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
+                                            if (err) {
+                                                res.status(400).json({
+                                                    message: 'The Loan could not be updated!',
+                                                    error: err.message
+                                                });
+                                            } else {
+                                                res.status(201).json({
+                                                    message: 'Loan and Account successfully updated!',
+                                                });
+                                            }
+                                        });
+                                    }
                                 });
                             }
-                            // Set Loan Amount to 0
-                            db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
-                                if (err) {
-                                    res.status(400).json({
-                                        message: 'The Loan could not be updated!',
-                                        error: err.message
-                                    });
-                                }
-                                res.status(201).json({
-                                    message: 'Loan and Account successfully updated!',
-                                });
-                            });
-                        });
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     });
 });
@@ -739,16 +749,17 @@ app.get("/list-loans/:bankUserId", (req, res) => {
                 message: 'The Loans could not be showed!',
                 error: err
             });
+        } else {
+            if (!loans.length) {
+                res.status(400).json({
+                    message: 'No Unpaid Loans are available for this User!'
+                });
+            } else {
+                res.status(200).json({
+                    loans
+                });
+            }
         }
-        console.log('loans', loans);
-        if (!loans.length) {
-            res.status(400).json({
-                message: 'No Unpaid Loans are available for this User!'
-            });
-        }
-        res.status(200).json({
-            loans
-        });
     });
 });
 

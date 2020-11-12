@@ -43,6 +43,8 @@ serviceEndpoints:
     url: 'http://localhost:3001'
   functionService:
     url: 'http://localhost:7071'
+  functionPyService:
+    url: 'http://localhost:7072'
 policies:
   - basic-auth
   - cors
@@ -85,9 +87,16 @@ pipelines:
     apiEndpoints:
       - interestRate
       - loanAlgorithm
-      - taxCalculator
     policies:
       - proxy:
           - action:
               serviceEndpoint: functionService
+              changeOrigin: true
+  functionsPyPipeline:
+    apiEndpoints:
+      - taxCalculator
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: functionPyService
               changeOrigin: true

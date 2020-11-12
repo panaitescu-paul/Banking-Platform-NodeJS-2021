@@ -6,9 +6,7 @@ const PORT = 3000;
 let app = express();
 app.use(express.json());
 
-// Use the long path for making the gateway work and the short path when running locally
 let db = new sqlite3.Database('../../Borger/db/borger.db', (err) => {
-// let db = new sqlite3.Database('./db/borger.db', (err) => {
     if(err) {
         return console.log(err.message);
     }
@@ -49,11 +47,12 @@ app.post("/borger", (req, res) => {
                 error: err.message
             });
             console.log(err.message);
+        } else {
+            console.log(`A new row has been inserted!`);
+            res.status(201).json({
+                message: 'Borger user successfully created!'
+            });
         }
-        console.log(`A new row has been inserted!`);
-        res.status(201).json({
-            message: 'Borger user successfully created!'
-        });
     });
 });
 
@@ -67,11 +66,11 @@ app.get("/borger", (req, res) => {
                 error: err
             });
             console.log(err);
+        } else {
+            res.status(200).json({
+                borgerUsers
+            });
         }
-
-        res.status(200).json({
-            borgerUsers
-        });
     });
 });
 
@@ -86,15 +85,16 @@ app.get("/borger/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        if(borgerUser.length) {
-            res.status(200).json({
-                borgerUser
-            });
         } else {
-            res.status(404).json({
-                message: `No borger user found with the id ${req.params.id}!`
-            });
+            if(borgerUser.length) {
+                res.status(200).json({
+                    borgerUser
+                });
+            } else {
+                res.status(404).json({
+                    message: `No borger user found with the id ${req.params.id}!`
+                });
+            }
         }
     });
 });
@@ -111,25 +111,26 @@ app.put("/borger/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Borger User: ", borgerUser);
-        if(!borgerUser.length) {
-            res.status(404).json({
-                message: `No borger user found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlUpdate, [borgerUserId, req.params.id], (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The borger user could not be updated!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Borger user successfully updated!'
+            if(!borgerUser.length) {
+                res.status(404).json({
+                    message: `No borger user found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlUpdate, [borgerUserId, req.params.id], (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The borger user could not be updated!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(201).json({
+                            message: 'Borger user successfully updated!'
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -145,25 +146,26 @@ app.delete("/borger/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Borger user: ", borgerUser);
-        if(!borgerUser.length) {
-            res.status(404).json({
-                message: `No borger user found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlDelete, req.params.id, (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The borger user could not be deleted!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Borger user successfully deleted!'
+            if(!borgerUser.length) {
+                res.status(404).json({
+                    message: `No borger user found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlDelete, req.params.id, (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The borger user could not be deleted!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    } else {
+                        res.status(201).json({
+                            message: 'Borger user successfully deleted!'
+                        });
+                    }
+                });
+            }
         }
     });
 });
@@ -181,7 +183,6 @@ app.post("/address", (req, res) => {
 
     // check if the borger user id exists
     axios.get(`http://localhost:3000/borger/${borgerUserId}`).then(response =>{
-
         // get all the existing addresses
         axios.get(`http://localhost:3000/address`).then(response => {
             let addresses = response.data.addresses;
@@ -208,11 +209,12 @@ app.post("/address", (req, res) => {
                         error: err.message
                     });
                     console.log(err.message);
+                } else {
+                    console.log(`A new row has been inserted!`);
+                    res.status(201).json({
+                        message: 'Address successfully created!',
+                    });
                 }
-                console.log(`A new row has been inserted!`);
-                res.status(201).json({
-                    message: 'Address successfully created!',
-                });
             });
         }).catch(err =>{
             if(err){
@@ -244,12 +246,12 @@ app.get("/address", (req, res) => {
                 error: err
             });
             console.log(err);
+        } else {
+            console.log("Addresses:", addresses);
+            res.status(200).json({
+                addresses
+            });
         }
-
-        console.log("Addresses:", addresses);
-        res.status(200).json({
-            addresses
-        });
     });
 });
 
@@ -264,16 +266,16 @@ app.get("/address/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Address: ", address);
-        if(address.length) {
-            res.status(200).json({
-                address
-            });
         } else {
-            res.status(404).json({
-                message: `No address found with the id ${req.params.id}!`
-            });
+            if(address.length) {
+                res.status(200).json({
+                    address
+                });
+            } else {
+                res.status(404).json({
+                    message: `No address found with the id ${req.params.id}!`
+                });
+            }
         }
     });
 });
@@ -291,25 +293,25 @@ app.put("/address/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Address: ", addressDB);
-        if(!addressDB.length) {
-            res.status(404).json({
-                message: `No address found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlUpdate, [borgerUserId, address, req.params.id], (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The address could not be updated!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Address successfully updated!',
+            if(!addressDB.length) {
+                res.status(404).json({
+                    message: `No address found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlUpdate, [borgerUserId, address, req.params.id], (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The address could not be updated!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    }
+                    res.status(201).json({
+                        message: 'Address successfully updated!',
+                    });
+                });
+            }
         }
     });
 });
@@ -325,25 +327,25 @@ app.delete("/address/:id", (req, res) => {
                 error: err
             });
             console.log(err);
-        }
-        console.log("Address: ", address);
-        if(!address.length) {
-            res.status(404).json({
-                message: `No address found with the id ${req.params.id}!`
-            });
         } else {
-            db.run(sqlDelete, req.params.id, (err) => {
-                if (err) {
-                    res.status(400).json({
-                        message: 'The address could not be deleted!',
-                        error: err.message
-                    });
-                    console.log(err.message);
-                }
-                res.status(201).json({
-                    message: 'Address successfully deleted!'
+            if(!address.length) {
+                res.status(404).json({
+                    message: `No address found with the id ${req.params.id}!`
                 });
-            });
+            } else {
+                db.run(sqlDelete, req.params.id, (err) => {
+                    if (err) {
+                        res.status(400).json({
+                            message: 'The address could not be deleted!',
+                            error: err.message
+                        });
+                        console.log(err.message);
+                    }
+                    res.status(201).json({
+                        message: 'Address successfully deleted!'
+                    });
+                });
+            }
         }
     });
 });
