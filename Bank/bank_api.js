@@ -207,6 +207,7 @@ app.post("/account", (req, res) => {
     let interestRate = req.body.interestRate;
     let amount = req.body.amount;
     let sqlGetBankUser = `SELECT * FROM BankUser WHERE Id = ?`;
+    let sqlGetAccount = `SELECT * FROM Account WHERE BankUserId = ?`;
     let sqlAccount = `INSERT INTO Account(BankUserId, AccountNo, IsStudent, InterestRate, Amount) VALUES(?, ?, ?, ?, ?)`;
 
     // Check if the bankUserId exists in the BankUser table
@@ -222,25 +223,41 @@ app.post("/account", (req, res) => {
                     message: `No Bank User found with the id ${bankUserId}!`
                 });
             } else {
-                db.run(sqlAccount, [bankUserId, accountNo, isStudent, interestRate, amount], (err) => {
+                // Check if the bankUserId already has an Account
+                db.all(sqlGetAccount, [bankUserId], (err, account) => {
                     if (err) {
-                        if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
-                            res.status(400).json({
-                                message: 'The Account Number already exists!',
-                                error: err.message
-                            });
-                        } else {
-                            res.status(400).json({
-                                message: 'The Account could not be created!',
-                                error: err.message
-                            });
-                            console.log(err.message);
-                        }
-                    } else {
-                        console.log(`A new row has been inserted!`);
-                        res.status(201).json({
-                            message: 'Account successfully created!',
+                        res.status(400).json({
+                            error: err
                         });
+                        console.log(err);
+                    } else {
+                        if(account.length) {
+                            res.status(404).json({
+                                message: `The Bank User with id ${bankUserId} already has an Account!`
+                            });
+                        } else { // create an Account
+                            db.run(sqlAccount, [bankUserId, accountNo, isStudent, interestRate, amount], (err) => {
+                                if (err) {
+                                    if(err.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: Account.AccountNo') {
+                                        res.status(400).json({
+                                            message: 'The Account Number already exists!',
+                                            error: err.message
+                                        });
+                                    } else {
+                                        res.status(400).json({
+                                            message: 'The Account could not be created!',
+                                            error: err.message
+                                        });
+                                        console.log(err.message);
+                                    }
+                                } else {
+                                    console.log(`A new row has been inserted!`);
+                                    res.status(201).json({
+                                        message: 'Account successfully created!',
+                                    });
+                                }
+                            });
+                        }
                     }
                 });
             }
@@ -300,10 +317,12 @@ app.put("/account/:id", (req, res) => {
     let interestRate = req.body.interestRate;
     let amount = req.body.amount;
     let sqlGet = `SELECT * FROM Account WHERE Id = ?`;
+    let sqlGetAccount = `SELECT * FROM Account WHERE BankUserId = ?`;
     let sqlUpdate = `UPDATE Account SET BankUserId = ?, AccountNo = ?, IsStudent = ?, 
                                         InterestRate = ?, Amount = ?, ModifiedAt = ? 
                                         WHERE Id = ?`;
 
+    // Check if the bankUserId exists in the BankUser table
     db.all(sqlGet, [req.params.id], (err, account) => {
         if (err) {
             res.status(400).json({
@@ -667,6 +686,7 @@ app.put("/pay-loan", (req, res) => {
                     message: `No Account was found with the id ${req.params.id}!`
                 });
             } else {
+                console.log("account", account);
                 let date = new Date();
                 let year = date.getFullYear();
                 let month = ("0" + (date.getMonth() + 1)).slice(-2);
