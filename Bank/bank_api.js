@@ -57,6 +57,7 @@ db.run(`CREATE TABLE IF NOT EXISTS Loan(
 // |  Bank User API  |
 // -------------------
 
+// CREATE Bank User
 app.post("/bank", (req, res) => {
     let bankUserId = req.body.userId;
     let sql = `INSERT INTO BankUser(UserId) VALUES(?)`;
@@ -77,6 +78,7 @@ app.post("/bank", (req, res) => {
     });
 });
 
+// READ Bank Users
 app.get("/bank", (req, res) => {
     let sql = `SELECT * FROM BankUser`;
     db.all(sql, [], (err, bankUsers) => {
@@ -94,6 +96,7 @@ app.get("/bank", (req, res) => {
     });
 });
 
+// READ Bank User by id
 app.get("/bank/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let sql = `SELECT * FROM BankUser WHERE Id = ?`;
@@ -118,6 +121,7 @@ app.get("/bank/:id", (req, res) => {
     });
 });
 
+// UPDATE Bank User by id
 app.put("/bank/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let bankUserId = req.body.userId;
@@ -161,6 +165,7 @@ app.put("/bank/:id", (req, res) => {
     });
 });
 
+// DELETE Bank User by id
 app.delete("/bank/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let sqlGet = `SELECT * FROM BankUser WHERE Id = ?`;
@@ -663,7 +668,7 @@ app.post("/create-loan", (req, res) => {
     });
 });
 
-// UPDATE Loan and Account
+// Pay Loan - UPDATE Loan and Account
 app.put("/pay-loan", (req, res) => {
     let bankUserId = req.body.bankUserId;
     let loanId = req.body.loanId;

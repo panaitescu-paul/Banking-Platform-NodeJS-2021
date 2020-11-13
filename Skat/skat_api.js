@@ -52,7 +52,7 @@ db.run(`CREATE TABLE IF NOT EXISTS SkatUserYear(
 // |   Skat User API   |
 // -------------------
 
-// CREATE SkatUser
+// CREATE Skat User
 app.post("/skat-user", (req, res) => {
     let userId = req.body.userId;
     let sql = `INSERT INTO SkatUser(UserId) VALUES(?)`;
@@ -91,7 +91,7 @@ app.get("/skat-user", (req, res) => {
     });
 });
 
-// READ Skat User by id
+// READ Skat User by Id
 app.get("/skat-user/:id", (req, res) => {
     console.log("req.params.id: ", req.params.id);
     let sql = `SELECT * FROM SkatUser WHERE Id = ?`;
@@ -116,7 +116,7 @@ app.get("/skat-user/:id", (req, res) => {
     });
 });
 
-// UPDATE Account by Id
+// UPDATE Skat User by Id
 app.put("/skat-user/:id", (req, res) => {
     let userId = req.body.userId;
     let isActive = req.body.isActive;
@@ -365,7 +365,11 @@ app.delete("/skat-year/:id", (req, res) => {
     });
 });
 
-// Pay taxes endpoint
+// ---------------------------
+// |   Other functionality   |
+// ---------------------------
+
+// Pay Taxes
 app.post("/pay-taxes", (req, res) => {
     let userId = req.body.userId;
     let totalAmount = req.body.totalAmount;

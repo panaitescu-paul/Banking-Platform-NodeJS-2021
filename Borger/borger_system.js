@@ -232,8 +232,6 @@ app.post("/address", (req, res) => {
             message: `There is no borger user with the id ${borgerUserId}`
         });
     });
-
-
 });
 
 // READ Address
