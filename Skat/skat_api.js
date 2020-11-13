@@ -91,12 +91,12 @@ app.get("/skat-user", (req, res) => {
     });
 });
 
-// READ Skat User by userId
-app.get("/skat-user/:userId", (req, res) => {
-    console.log("req.params.userId: ", req.params.userId);
-    let sql = `SELECT * FROM SkatUser WHERE UserId = ?`;
+// READ Skat User by id
+app.get("/skat-user/:id", (req, res) => {
+    console.log("req.params.id: ", req.params.id);
+    let sql = `SELECT * FROM SkatUser WHERE Id = ?`;
 
-    db.all(sql, [req.params.userId], (err, users) => {
+    db.all(sql, [req.params.id], (err, users) => {
         if (err) {
             res.status(400).json({
                 error: err
@@ -109,7 +109,7 @@ app.get("/skat-user/:userId", (req, res) => {
                 });
             } else {
                 res.status(404).json({
-                    message: `No Skat User was found with the userId ${req.params.userId}!`
+                    message: `No Skat User was found with the userId ${req.params.id}!`
                 });
             }
         }
