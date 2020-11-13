@@ -223,7 +223,7 @@ app.post("/skat-year", (req, res) => {
                     for (let i = 0; i < users.length; i++) {
                         // Add record in the Skat User Year Table for each Skat User
                         console.log("users[i].Id" + users[i].Id);
-                        db.run(sqlSkatUserYear, [users[i].Id, skatYearId, users[i].UserId, 0], (err) => {
+                        db.run(sqlSkatUserYear, [users[i].Id, skatYearId, users[i].UserId, 100], (err) => {
                             if (err) {
                                 res.status(400).json({
                                     message: 'The Skat User Year could not be created!',
@@ -370,12 +370,10 @@ app.post("/pay-taxes", (req, res) => {
     let userId = req.body.userId;
     let totalAmount = req.body.totalAmount;
     let sqlGet = `SELECT * FROM SkatUserYear WHERE UserId = ?`;
-    let sqlUpdate = `UPDATE SkatUserYear SET IsPaid = ?, Amount = ? WHERE UserId = ?`;
-    console.log("userId", userId);
-    console.log("totalAmount", totalAmount);
+    let sqlGetSkatYear = `SELECT * FROM SkatYear WHERE Id = ?`;
+    let sqlUpdate = `UPDATE SkatUserYear SET IsPaid = ?, Amount = ? WHERE Id = ?`;
 
     axios.get(`http://localhost:3001/bank`).then(response => {
-        console.log("Response: ", response.data.bankUsers);
         let bankUsers = response.data.bankUsers;
         let isFound = false;
         for (let i = 0; i < bankUsers.length; i++) {
@@ -396,53 +394,68 @@ app.post("/pay-taxes", (req, res) => {
                     console.log(err);
                 } else {
                     if(skatUserYears.length) {
-                        let countUnpaidTaxesPerYear = 0;
-                        // let sum = 0;
-                        // for (let i = 0; i < skatUserYears.length; i++) {
-                        //     if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {
-                        //         countUnpaidTaxesPerYear++;
-                        //         sum += skatUserYears[i].Amount;
-                        //     }
-                        // }
-                        // console.log("sum", sum);
-
-
-                        axios.post(`http://localhost:7072/api/Skat_Tax_Calculator`, {
-                            "money": totalAmount,
-                        }).then((response) => {
-                            console.log('response.data.tax_money', response.data.tax_money);
-                            let afterTaxAmount = totalAmount + response.data.tax_money;
-                            db.run(sqlUpdate, [1, afterTaxAmount, userId], (err) => {
-                                if (err) {
-                                    res.status(400).json({
-                                        message: 'The Skat User Year could not be updated!',
-                                        error: err.message
-                                    });
-                                    console.log(err.message);
-                                }
-                                // res.status(200).json({
-                                //     message: `1`
-                                // });
-                                axios.post(`http://localhost:3001/withdraw-money`, {
-                                    "amount": afterTaxAmount,
-                                    "userId": userId,
-                                }).then((response) => {
-                                    res.status(200).json({
-                                        message: 'Taxes successfully paid!'
-                                    });
-                                }, (error) => {
-                                    console.log(error);
-                                    res.status(403).json({
-                                        message: error
-                                    });
+                        let unpaidTaxes = false;
+                        for (let i = 0; i < skatUserYears.length; i++) {
+                            if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {  // check if the tax is not paid
+                                db.all(sqlGetSkatYear, [skatUserYears[i].SkatYearId], (err, skatYear) => {
+                                    if (err) {
+                                        res.status(400).json({
+                                            error: err
+                                        });
+                                        console.log(err);
+                                    } else {
+                                        let date = new Date();
+                                        let year = date.getFullYear();
+                                        if (skatYear[0].StartDate.substring(0, 4) <= year && year <= skatYear[0].EndDate.substring(0, 4)) { // check if this is the current year
+                                            axios.post(`http://localhost:7072/api/Skat_Tax_Calculator`, {
+                                                "money": totalAmount,
+                                            }).then((response) => {
+                                                let taxAmount = response.data.tax_money;
+                                                axios.post(`http://localhost:3001/withdraw-money`, {
+                                                    "amount": taxAmount,
+                                                    "userId": userId
+                                                }).then((response) => {
+                                                    // SkatUserYear(IsPaid, Amount, Id)
+                                                    // updated the amount from the SkatUserYear table with the amount given by the Tax Calculator,
+                                                    // the boolean iSPaid is set to true,
+                                                    // the update is made based on Table Id
+                                                    db.run(sqlUpdate, [1, taxAmount, skatUserYears[i].Id], (err) => {
+                                                        if (err) {
+                                                            res.status(400).json({
+                                                                message: 'The Skat User Year could not be updated!',
+                                                                error: err.message
+                                                            });
+                                                        } else {
+                                                            res.status(200).json({
+                                                                message: 'Taxes successfully paid!'
+                                                            });
+                                                        }
+                                                    });
+                                                }, (error) => {
+                                                    console.log(error.response.status);
+                                                    if (error.response.status === 404) {
+                                                        res.status(404).json({
+                                                            message: error.response.data.message
+                                                        });
+                                                    }
+                                                });
+                                            }, (error) => {
+                                                res.status(403).json({
+                                                    message: error
+                                                });
+                                            });
+                                        }
+                                    }
                                 });
+                            } else {
+                                unpaidTaxes = true;
+                            }
+                        }
+                        if (unpaidTaxes) {
+                            res.status(400).json({
+                                message: 'The Taxes for this year are already paid!'
                             });
-                        }, (error) => {
-                            console.log(error);
-                            res.status(403).json({
-                                message: error
-                            });
-                        });
+                        }
                     } else {
                         res.status(404).json({
                             message: `No Skat User Years was found for the user with id ${userId}!`
