@@ -1,3 +1,5 @@
+// Functions folder: npm start
+
 module.exports = async function (context, req) {
     const money = (req.query.money || (req.body && req.body.money));
     if (money < 0 ){

@@ -1,3 +1,5 @@
+// Functions folder: npm start
+
 module.exports = async function (context, req) {
     const depositAmount = (req.query.depositAmount || (req.body && req.body.depositAmount));
     const interestRate = depositAmount * 0.02;

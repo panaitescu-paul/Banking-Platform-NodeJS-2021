@@ -6,7 +6,6 @@ const PORT = 3002;
 let app = express();
 app.use(express.json());
 
-
 let db = new sqlite3.Database('../../Skat/db/skat.db', (err) => {
     if(err) {
         return console.log(err.message);
@@ -63,9 +62,7 @@ app.post("/skat-user", (req, res) => {
                 message: 'The Skat User could not be created!',
                 error: err.message
             });
-            console.log(err.message);
         } else {
-            console.log(`A new row has been inserted!`);
             res.status(201).json({
                 message: 'Skat User successfully created!',
             });
@@ -101,7 +98,6 @@ app.get("/skat-user/:id", (req, res) => {
             res.status(400).json({
                 error: err
             });
-            console.log(err);
         } else {
             if(users.length) {
                 res.status(200).json({
@@ -127,7 +123,6 @@ app.put("/skat-user/:id", (req, res) => {
             res.status(400).json({
                 error: err
             });
-            console.log(err);
         } else {
             if(!skatUser.length) {
                 res.status(404).json({
@@ -154,7 +149,6 @@ app.put("/skat-user/:id", (req, res) => {
 
 // DELETE Skat User by Id
 app.delete("/skat-user/:id", (req, res) => {
-    console.log("req.params.id: ", req.params.id);
     let sqlGet = `SELECT * FROM SkatUser WHERE Id = ?`;
     let sqlDelete = `DELETE FROM SkatUser WHERE Id = ?`;
     db.all(sqlGet, [req.params.id], (err, user) => {
@@ -162,7 +156,6 @@ app.delete("/skat-user/:id", (req, res) => {
             res.status(400).json({
                 error: err
             });
-            console.log(err);
         } else {
             if(!user.length) {
                 res.status(404).json({
@@ -175,7 +168,6 @@ app.delete("/skat-user/:id", (req, res) => {
                             message: 'The Skat User could not be deleted!',
                             error: err.message
                         });
-                        console.log(err.message);
                     } else {
                         res.status(200).json({
                             message: 'Skat User successfully deleted!'
@@ -207,29 +199,23 @@ app.post("/skat-year", (req, res) => {
                 message: 'The Skat Year could not be created!',
                 error: err.message
             });
-            console.log(err.message);
         } else {
-            console.log(`A new row has been inserted!`);
             skatYearId = this.lastID; // get the id of the record
-            console.warn("inserted id:", this.lastID);
             db.all(sqlGet, [], (err, users) => {
                 if (err) {
                     res.status(400).json({
                         message: 'The Skat Users could not be showed!',
                         error: err
                     });
-                    console.log(err);
                 } else {
                     for (let i = 0; i < users.length; i++) {
                         // Add record in the Skat User Year Table for each Skat User
-                        console.log("users[i].Id" + users[i].Id);
                         db.run(sqlSkatUserYear, [users[i].Id, skatYearId, users[i].UserId, 100], (err) => {
                             if (err) {
                                 res.status(400).json({
                                     message: 'The Skat User Year could not be created!',
                                     error: err.message
                                 });
-                                console.log(err.message);
                             }
                             console.log(`A new Skat User Year has been inserted!`);
                         });
@@ -252,7 +238,6 @@ app.get("/skat-year", (req, res) => {
                 message: 'The Skat Years could not be showed!',
                 error: err
             });
-            console.log(err);
         } else {
             res.status(200).json({
                 records
@@ -263,7 +248,6 @@ app.get("/skat-year", (req, res) => {
 
 // READ Skat Year by Id
 app.get("/skat-year/:id", (req, res) => {
-    console.log("req.params.userId: ", req.params.id);
     let sql = `SELECT * FROM SkatYear WHERE Id = ?`;
 
     db.all(sql, [req.params.id], (err, years) => {
@@ -293,6 +277,7 @@ app.put("/skat-year/:id", (req, res) => {
     let endDate = req.body.endDate;
     let sqlGet = `SELECT * FROM SkatYear WHERE Id = ?`;
     let sqlUpdate = `UPDATE SkatYear SET Label = ?, ModifiedAt = ?, StartDate = ?, EndDate = ? WHERE Id = ?`;
+
     db.all(sqlGet, [req.params.id], (err, skatYear) => {
         if (err) {
             res.status(400).json({
@@ -377,6 +362,7 @@ app.post("/pay-taxes", (req, res) => {
     let sqlGetSkatYear = `SELECT * FROM SkatYear WHERE Id = ?`;
     let sqlUpdate = `UPDATE SkatUserYear SET IsPaid = ?, Amount = ? WHERE Id = ?`;
 
+    // Go through all the Bank Users
     axios.get(`http://localhost:3001/bank`).then(response => {
         let bankUsers = response.data.bankUsers;
         let isFound = false;
@@ -390,6 +376,7 @@ app.post("/pay-taxes", (req, res) => {
                 message: `No User was found with the id ${userId}!`
             });
         } else {
+            // Get all the Skat User Years based on UserId
             db.all(sqlGet, [userId], (err, skatUserYears) => {
                 if (err) {
                     res.status(400).json({
@@ -400,7 +387,9 @@ app.post("/pay-taxes", (req, res) => {
                     if(skatUserYears.length) {
                         let unpaidTaxes = false;
                         for (let i = 0; i < skatUserYears.length; i++) {
-                            if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {  // check if the tax is not paid
+                            // Check if the Taxes are paid
+                            if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {
+                                // Get all the Skat Years based on Id
                                 db.all(sqlGetSkatYear, [skatUserYears[i].SkatYearId], (err, skatYear) => {
                                     if (err) {
                                         res.status(400).json({
@@ -410,7 +399,9 @@ app.post("/pay-taxes", (req, res) => {
                                     } else {
                                         let date = new Date();
                                         let year = date.getFullYear();
-                                        if (skatYear[0].StartDate.substring(0, 4) <= year && year <= skatYear[0].EndDate.substring(0, 4)) { // check if this is the current year
+                                        // Check if this is the current year
+                                        if (skatYear[0].StartDate.substring(0, 4) <= year && year <= skatYear[0].EndDate.substring(0, 4)) {
+                                            // Call Skat_Tax_Calculator Function
                                             axios.post(`http://localhost:7072/api/Skat_Tax_Calculator`, {
                                                 "money": totalAmount,
                                             }).then((response) => {
@@ -419,10 +410,8 @@ app.post("/pay-taxes", (req, res) => {
                                                     "amount": taxAmount,
                                                     "userId": userId
                                                 }).then((response) => {
-                                                    // SkatUserYear(IsPaid, Amount, Id)
-                                                    // updated the amount from the SkatUserYear table with the amount given by the Tax Calculator,
-                                                    // the boolean iSPaid is set to true,
-                                                    // the update is made based on Table Id
+                                                    // Update SkatUserYear by Id with the amount given by the Tax Calculator,
+                                                    // and the boolean IsPaid is set to true
                                                     db.run(sqlUpdate, [1, taxAmount, skatUserYears[i].Id], (err) => {
                                                         if (err) {
                                                             res.status(400).json({
@@ -436,7 +425,6 @@ app.post("/pay-taxes", (req, res) => {
                                                         }
                                                     });
                                                 }, (error) => {
-                                                    console.log(error.response.status);
                                                     if (error.response.status === 404) {
                                                         res.status(404).json({
                                                             message: error.response.data.message

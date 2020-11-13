@@ -1,5 +1,6 @@
-module.exports = async function (context, req) {
+// Functions folder: npm start
 
+module.exports = async function (context, req) {
     const loan = (req.query.loan || (req.body && req.body.loan));
     const totalAccountAmount = (req.query.totalAccountAmount || (req.body && req.body.totalAccountAmount));
 
