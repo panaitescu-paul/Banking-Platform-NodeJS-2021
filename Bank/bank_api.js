@@ -61,7 +61,6 @@ db.run(`CREATE TABLE IF NOT EXISTS Loan(
 app.post("/bank", (req, res) => {
     let bankUserId = req.body.userId;
     let sql = `INSERT INTO BankUser(UserId) VALUES(?)`;
-
     db.run(sql, [bankUserId], (err) => {
         if (err) {
             res.status(400).json({
@@ -436,6 +435,7 @@ app.post("/add-deposit", (req, res) => {
                         message: 'The amount deposited cannot be null or negative!',
                     });
                 } else {
+
                     // Call the Bank_Interest_Rate Function
                     axios.post('http://localhost:7071/api/Bank_Interest_Rate', {depositAmount: amount}).then(response =>{
                         let result = response.data;
@@ -528,6 +528,7 @@ app.post("/create-loan", (req, res) => {
                     message: `No Bank User found with the id ${bankUserId}!`
                 });
             } else {
+
                 // Get the sum of all accounts from a certain User
                 axios.get(`http://localhost:3001/account`).then(response => {
                     let accounts = response.data.accounts;
@@ -537,6 +538,7 @@ app.post("/create-loan", (req, res) => {
                             amount = accounts[i].Amount;
                         }
                     }
+
                     // Check if the Loan is Valid
                     axios.post(`http://localhost:7071/api/Loan_Algorithm`, {
                         "loan": loanAmount,
@@ -602,6 +604,7 @@ app.put("/pay-loan", (req, res) => {
                 let minutes = ("0" + date.getMinutes()).slice(-2);
                 let seconds = ("0" + date.getSeconds()).slice(-2);
                 let modifiedAt = year + "-" + month + "-" + day + " " + hours + ":" + minutes + ":" + seconds;
+
                 // Get the Loan Amount
                 db.all(sqlGetLoan, [loanId], (err, loan) => {
                     if (err) {
@@ -616,6 +619,7 @@ app.put("/pay-loan", (req, res) => {
                         } else {
                             loanAmount = loan[0].Amount;
                             accountAmount = account[0].Amount;
+
                             // Obtain new Account Amount after loan substraction
                             let amount = accountAmount - loanAmount;
                             if (loanAmount > accountAmount) {
@@ -623,6 +627,7 @@ app.put("/pay-loan", (req, res) => {
                                     message: 'Not enough money in the Account to pay the Loan!',
                                 });
                             } else {
+
                                 // Substract Amount from Account
                                 db.run(sqlUpdateAccount, [amount, modifiedAt, account[0].Id], (err) => {
                                     if (err) {
@@ -631,6 +636,7 @@ app.put("/pay-loan", (req, res) => {
                                             error: err.message
                                         });
                                     } else {
+
                                         // Set Loan Amount to 0
                                         db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
                                             if (err) {

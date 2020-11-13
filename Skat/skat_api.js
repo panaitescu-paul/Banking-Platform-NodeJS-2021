@@ -389,6 +389,7 @@ app.post("/pay-taxes", (req, res) => {
                         for (let i = 0; i < skatUserYears.length; i++) {
                             // Check if the Taxes are paid
                             if (skatUserYears[i].IsPaid === 0 && skatUserYears[i].Amount > 0) {
+
                                 // Get all the Skat Years based on Id
                                 db.all(sqlGetSkatYear, [skatUserYears[i].SkatYearId], (err, skatYear) => {
                                     if (err) {
@@ -401,6 +402,7 @@ app.post("/pay-taxes", (req, res) => {
                                         let year = date.getFullYear();
                                         // Check if this is the current year
                                         if (skatYear[0].StartDate.substring(0, 4) <= year && year <= skatYear[0].EndDate.substring(0, 4)) {
+
                                             // Call Skat_Tax_Calculator Function
                                             axios.post(`http://localhost:7072/api/Skat_Tax_Calculator`, {
                                                 "money": totalAmount,
@@ -410,6 +412,7 @@ app.post("/pay-taxes", (req, res) => {
                                                     "amount": taxAmount,
                                                     "userId": userId
                                                 }).then((response) => {
+
                                                     // Update SkatUserYear by Id with the amount given by the Tax Calculator,
                                                     // and the boolean IsPaid is set to true
                                                     db.run(sqlUpdate, [1, taxAmount, skatUserYears[i].Id], (err) => {
