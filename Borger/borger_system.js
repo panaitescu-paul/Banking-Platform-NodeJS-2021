@@ -190,6 +190,7 @@ app.post("/address", (req, res) => {
 
     // check if the borger user id exists
     axios.get(`http://localhost:3000/borger/${borgerUserId}`).then(response =>{
+
         // get all the existing addresses
         axios.get(`http://localhost:3000/address`).then(response => {
             let addresses = response.data.addresses;
