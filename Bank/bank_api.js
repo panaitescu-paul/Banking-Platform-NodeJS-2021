@@ -217,7 +217,6 @@ app.post("/account", (req, res) => {
     let bankUserId = req.body.bankUserId;
     let accountNo = req.body.accountNo;
     let isStudent = req.body.isStudent;
-    // let interestRate = req.body.interestRate;
     let amount = req.body.amount;
     let sqlGetBankUser = `SELECT * FROM BankUser WHERE Id = ?`;
     let sqlGetAccount = `SELECT * FROM Account WHERE BankUserId = ?`;
@@ -571,9 +570,10 @@ app.get("/list-deposits/:bankUserId", (req, res) => {
 app.post("/create-loan", (req, res) => {
     let bankUserId = req.body.bankUserId;
     let loanAmount = req.body.loanAmount;
-    let totalAccountAmount = 0;
     let sqlGetBankUser = `SELECT * FROM BankUser WHERE Id = ?`;
+    let sqlGetAccount = `SELECT * FROM Account WHERE BankUserId = ?`;
     let sqlLoan = `INSERT INTO Loan(BankUserId, Amount) VALUES(?, ?)`;
+    let sqlGetLoan = `SELECT * FROM Loan WHERE Id = ?`;
 
     // Check if the bankUserId exists in the BankUser table
     db.all(sqlGetBankUser, [bankUserId], (err, bankUser) => {
@@ -588,43 +588,55 @@ app.post("/create-loan", (req, res) => {
                 });
             } else {
 
-                // Get the sum of all accounts from a certain User
-                axios.get(`http://localhost:3001/account`).then(response => {
-                    let accounts = response.data.accounts;
-                    let amount = 0;
-                    for (i = 0; i < accounts.length; i++) {
-                        if (bankUserId === accounts[i].BankUserId) {
-                            amount = accounts[i].Amount;
-                        }
-                    }
-
-                    // Check if the Loan is Valid
-                    axios.post(`http://localhost:7071/api/Loan_Algorithm`, {
-                        "loan": loanAmount,
-                        "totalAccountAmount": amount
-                    }).then((response) => {
-                        db.run(sqlLoan, [bankUserId, loanAmount], (err) => {
-                            if (err) {
-                                res.status(400).json({
-                                    message: 'The Loan could not be created!',
-                                    error: err.message
-                                });
-                            } else {
-                                res.status(201).json({
-                                    message: 'Loan successfully created!',
-                                });
-                            }
-                        });
-                    }, (error) => {
-                        res.status(403).json({
-                            message: 'The Loan could not be created! Loan amount is too big!',
-                        });
-                    });
-                }).catch(err =>{
-                    if(err){
+                db.all(sqlGetAccount, [bankUserId], (err, account) => {
+                    if (err) {
                         res.status(400).json({
-                            message: 'Could not get the total Account Amount for this User Id!'
+                            error: err
                         });
+                    } else {
+                        if (!account.length) {
+                            res.status( 404 ).json( {
+                                message: `No Account found with the bank user id  ${bankUserId}!`
+                            } );
+                        } else {
+                            // Check if the Loan is Valid
+                            axios.post( `http://localhost:7071/api/Loan_Algorithm`, {
+                                "loan": loanAmount,
+                                "totalAccountAmount": account[0].Amount
+                            } ).then( (response) => {
+                                db.run( sqlLoan, [bankUserId, loanAmount], function (err) {
+                                    if (err) {
+                                        res.status( 400 ).json( {
+                                            message: 'The Loan could not be created!',
+                                            error: err.message
+                                        } );
+                                    } else {
+                                        db.all(sqlGetLoan, [this.lastID], (err, newLoan) => {
+                                            if (err) {
+                                                res.status(400).json({
+                                                    error: err
+                                                });
+                                                console.log(err);
+                                            } else {
+                                                if(newLoan.length) {
+                                                    res.status(201).json({
+                                                        newLoan
+                                                    });
+                                                } else {
+                                                    res.status(404).json({
+                                                        message: `No Loan was found with the id ${this.lastID}!`
+                                                    });
+                                                }
+                                            }
+                                        });
+                                    }
+                                } );
+                            }, (error) => {
+                                res.status( 403 ).json( {
+                                    message: 'The Loan could not be created! Loan amount is too big!'
+                                } );
+                            } );
+                        }
                     }
                 });
             }
@@ -652,7 +664,7 @@ app.put("/pay-loan", (req, res) => {
         } else {
             if(!account.length) {
                 res.status(404).json({
-                    message: `No Account was found with the id ${req.params.id}!`
+                    message: `No Account was found with the bank user id ${bankUserId}!`
                 });
             } else {
                 let date = new Date();
@@ -679,15 +691,14 @@ app.put("/pay-loan", (req, res) => {
                             loanAmount = loan[0].Amount;
                             accountAmount = account[0].Amount;
 
-                            // Obtain new Account Amount after loan substraction
+                            // Obtain new Account Amount after loan subtraction
                             let amount = accountAmount - loanAmount;
                             if (loanAmount > accountAmount) {
                                 res.status(400).json({
                                     message: 'Not enough money in the Account to pay the Loan!',
                                 });
                             } else {
-
-                                // Substract Amount from Account
+                                // Subtract Amount from Account
                                 db.run(sqlUpdateAccount, [amount, modifiedAt, account[0].Id], (err) => {
                                     if (err) {
                                         res.status(400).json({
@@ -695,7 +706,6 @@ app.put("/pay-loan", (req, res) => {
                                             error: err.message
                                         });
                                     } else {
-
                                         // Set Loan Amount to 0
                                         db.run(sqlUpdateLoan, [0, modifiedAt, loanId], (err) => {
                                             if (err) {
@@ -704,8 +714,8 @@ app.put("/pay-loan", (req, res) => {
                                                     error: err.message
                                                 });
                                             } else {
-                                                res.status(201).json({
-                                                    message: 'Loan and Account successfully updated!',
+                                                res.status(200).json({
+                                                    message: 'Loan successfully paid!',
                                                 });
                                             }
                                         });
@@ -754,7 +764,7 @@ app.post("/withdraw-money", (req, res) => {
 
     if (amount <= 0 || amount === null) {
         res.status(404).json({
-            message: 'The amount deposited cannot be null or negative!',
+            message: 'The amount withdrawn cannot be null or negative!',
         });
     } else {
         db.all(sqlGetBankUser, [userId], (err, bankUser) => {
@@ -801,7 +811,7 @@ app.post("/withdraw-money", (req, res) => {
                                             });
                                             console.log(err.message);
                                         } else {
-                                            res.status(201).json({
+                                            res.status(200).json({
                                                 message: 'Withdraw successfully completed!',
                                             });
                                         }

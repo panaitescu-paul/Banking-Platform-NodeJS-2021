@@ -56,16 +56,51 @@ app.post("/skat-user", (req, res) => {
     let userId = req.body.userId;
     let sql = `INSERT INTO SkatUser(UserId) VALUES(?)`;
 
-    db.run(sql, [userId], (err) => {
-        if (err) {
-            res.status(400).json({
-                message: 'The Skat User could not be created!',
-                error: err.message
+    axios.get(`http://localhost:3002/skat-user`).then(response => {
+        console.log(response.data.users.length);
+        let isFound = false;
+        for (let i = 0; i < response.data.users.length; i++) {
+            if (response.data.users[i].UserId === userId) {
+                isFound = true;
+            }
+        }
+        if (!isFound) {
+            db.run(sql, [userId], function (err) {
+                if (err) {
+                    res.status(400).json({
+                        message: 'The Skat User could not be created!',
+                        error: err.message
+                    });
+                } else {
+                    axios.get(`http://localhost:3002/skat-user/${this.lastID}`).then(response =>{
+                        res.status(201).json({
+                            Id: response.data.users[0].Id,
+                            UserId: response.data.users[0].UserId,
+                            CreatedAt: response.data.users[0].CreatedAt,
+                            IsActive: response.data.users[0].IsActive
+                        });
+                    }).catch(err =>{
+                        if(err){
+                            console.log(err);
+                        }
+                        res.status(400).json({
+                            message: `There is no skat user with the id ${this.lastID}`
+                        });
+                    });
+                }
             });
         } else {
-            res.status(201).json({
-                message: 'Skat User successfully created!',
+            res.status(400).json({
+                message: 'A skat user with that user id already exists!'
             });
+        }
+
+    }).catch(err =>{
+        if(err){
+            res.status(400).json({
+                message: err
+            });
+            console.log(err);
         }
     });
 });
@@ -137,9 +172,7 @@ app.put("/skat-user/:id", (req, res) => {
                         });
                         console.log(err.message);
                     } else {
-                        res.status(201).json({
-                            message: 'Skat user successfully updated!',
-                        });
+                        res.sendStatus(204);
                     }
                 });
             }
@@ -150,7 +183,8 @@ app.put("/skat-user/:id", (req, res) => {
 // DELETE Skat User by Id
 app.delete("/skat-user/:id", (req, res) => {
     let sqlGet = `SELECT * FROM SkatUser WHERE Id = ?`;
-    let sqlDelete = `DELETE FROM SkatUser WHERE Id = ?`;
+    // let sqlDelete = `DELETE FROM SkatUser WHERE Id = ?`;
+    let sqlUpdateSkatUser = `UPDATE SkatUser SET IsActive = ? WHERE Id = ?`;
     db.all(sqlGet, [req.params.id], (err, user) => {
         if (err) {
             res.status(400).json({
@@ -162,18 +196,27 @@ app.delete("/skat-user/:id", (req, res) => {
                     message: `No Skat User was found with the id ${req.params.id}!`
                 });
             } else {
-                db.run(sqlDelete, req.params.id, (err) => {
+                db.run(sqlUpdateSkatUser, [0, req.params.id], (err) => {
                     if (err) {
                         res.status(400).json({
-                            message: 'The Skat User could not be deleted!',
+                            message: 'The Skat User could not be updated!',
                             error: err.message
                         });
+                        console.log(err.message);
                     } else {
-                        res.status(200).json({
-                            message: 'Skat User successfully deleted!'
-                        });
+                        res.sendStatus(204);
                     }
                 });
+                // db.run(sqlDelete, req.params.id, (err) => {
+                //     if (err) {
+                //         res.status(400).json({
+                //             message: 'The Skat User could not be deleted!',
+                //             error: err.message
+                //         });
+                //     } else {
+                //         res.sendStatus(204);
+                //     }
+                // });
             }
         }
     });
@@ -222,8 +265,22 @@ app.post("/skat-year", (req, res) => {
                     }
                 }
             });
-            res.status(200).json({
-                message: 'Skat Year successfully created!'
+            axios.get(`http://localhost:3002/skat-year/${skatYearId}`).then(response =>{
+                res.status(201).json({
+                    Id: response.data.years[0].Id,
+                    Label: response.data.years[0].Label,
+                    CreatedAt: response.data.years[0].CreatedAt,
+                    ModifiedAt: response.data.years[0].ModifiedAt,
+                    StartDate: response.data.years[0].StartDate,
+                    EndDate: response.data.years[0].EndDate
+                });
+            }).catch(err =>{
+                if(err){
+                    console.log(err);
+                }
+                res.status(400).json({
+                    message: `There is no skat year with the id ${skatYearId}`
+                });
             });
         }
     });
@@ -306,9 +363,7 @@ app.put("/skat-year/:id", (req, res) => {
                         });
                         console.log(err.message);
                     } else {
-                        res.status(201).json({
-                            message: 'Skat Year successfully updated!',
-                        });
+                        res.sendStatus(204);
                     }
                 });
             }
@@ -340,9 +395,7 @@ app.delete("/skat-year/:id", (req, res) => {
                         });
                         console.log(err.message);
                     } else {
-                        res.status(200).json({
-                            message: 'Skat Year successfully deleted!'
-                        });
+                        res.sendStatus(204);
                     }
                 });
             }
