@@ -1,3 +1,3 @@
-# SI Mandatory Assignment 2
+# Banking System
 
-### Banking System
+Banking System with Database made in SQLite, and RESTful APIs made in NodeJS.
